@@ -70,9 +70,6 @@ def search_num_first(row,D4_geo_num_df):
         dwel2 = (row['Dwelling AddressLine2'].strip())
         dwel3 = (row['Dwelling AddressLine3'].strip())
         # num part
-        num = None
-        search_num=None
-        last_digit=-1
         if (re.search(r'\b^[0-9]+\b', dwel1)):
             num = re.search(r'\b^[0-9]+\b', dwel1).group()
             last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
@@ -93,30 +90,28 @@ def search_num_first(row,D4_geo_num_df):
                 last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
                 thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
             search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
-        if (num is not None):
-            search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
-        if (search_num is not None):
-            if search_num.shape[0] == 1:
-                if (search_num.iloc[0]['Status']==""):
+        search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
+        if search_num.shape[0] == 1:
+            if (search_num.iloc[0]['Status']==""):
+                row = match_process(row, search_num)
+        elif search_num.shape[0] > 1:
+            num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
+            if (num_match.shape[0] == 1):
+                row = match_process(row,num_match)
+            else:
+                # Checking if it matches
+                last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
+                if (last_search.shape[0]):
                     row = match_process(row, search_num)
-            elif search_num.shape[0] > 1:
-                num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
-                if (num_match.shape[0] == 1):
-                    row = match_process(row,num_match)
                 else:
-                    # Checking if it matches
-                    last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
-                    if (last_search.shape[0]):
-                        row = match_process(row, search_num)
+                    if (len(search_num['SMALL_AREA_REF'].unique())==1):
+                        row['Status']='SAME_SA'
+                        row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
                     else:
-                        if (len(search_num['SMALL_AREA_REF'].unique())==1):
-                            row['Status']='SAME_SA'
-                            row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
-                        else:
-                            #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
-                            # Search by fuzzy wuzzy
-                            # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
-                            row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1)
+                        #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
+                        # Search by fuzzy wuzzy
+                        # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
+                        row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1)
         else:
             if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
                 row['Status']='SAME_SA_NO_NUMs'
@@ -140,20 +135,23 @@ def search_letter_first(row,D4_geo_letters_df):
             num = re.search(r'\b[0-9]+\b',dwel1).group()
             last_digit = re.search(r'\b[0-9]+\b',dwel1).end()
             thoroughfare = dwel1[last_digit+1:]
-            if (len(thoroughfare)==0 and len(dwel2)>0):
+            if (len(thoroughfare)==0):
                 thoroughfare=dwel2
         else:
             thoroughfare = dwel1
         search_thoroughfare = D4_geo_letters_df[D4_geo_letters_df.loc[:,'Full_Address'].str.contains(thoroughfare)]
         if (search_thoroughfare.shape[0]==0):
-            if (thoroughfare!=dwel2):
-                thoroughfare = dwel2
-            else:
-                thoroughfare=dwel3
-            if bool(re.search(r'\b^[0-9]+\b', thoroughfare)):
-                num = re.search(r'\b^[0-9]+\b', thoroughfare).group()
+            thoroughfare = dwel2
+            if bool(re.search(r'\b^[0-9]+\b', dwel2)):
+                num = re.search(r'\b^[0-9]+\b', dwel2).group()
                 last_digit = re.search(r'\b^[0-9]+\b', num).end()
-                thoroughfare = thoroughfare[last_digit + 1:]  # this thoroughfare can be the Building group name
+                thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
+            if (len(dwel2)==0):
+                thoroughfare=dwel3
+                if bool(re.search(r'\b^[0-9]+\b', dwel3)):
+                    num = re.search(r'\b^[0-9]+\b', dwel3).group()
+                    last_digit = re.search(r'\b^[0-9]+\b', num).end()
+                    thoroughfare = dwel3[last_digit + 1:]
             search_thoroughfare = D4_geo_letters_df[D4_geo_letters_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
         if (len(num) > 0):
             search_num = search_thoroughfare[(search_thoroughfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thoroughfare.loc[:, 'BUILDING_NUMBER'] == num)]
@@ -171,7 +169,7 @@ def search_letter_first(row,D4_geo_letters_df):
                     # Checking if it matches
                     last_search = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1,dwel2))]
                     if (last_search.shape[0]):
-                        row = match_process(row, last_search)
+                        row = match_process(row, search_num)
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                             row['Status'] = 'SAME_SA'
@@ -257,7 +255,7 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
 
     # Including APARMENT(S)/FLAT
     D4_dwelling_num_withAPART_df = D4_dwelling_df[(D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(
-        r'\b\d+\b', na=False, regex=True)) & D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(
+        r'\b^\d+\b', na=False, regex=True)) & D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(
         r'\bAPARTMENT|FLAT|BLOCK\b', na=False, regex=True)]
     D4_dwelling_numm_withNOAPART_df = D4_dwelling_num_withAPART_df.replace(r'APARTMENTS|FLAT|APARTMENT', '', regex=True)
     D4_dwelling_numm_withNOAPART_df['Dwelling AddressLine1'] = D4_dwelling_numm_withNOAPART_df['Dwelling AddressLine1'].apply(lambda x: x.strip())
@@ -273,17 +271,17 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
     D4_geo_letters_df = D4_geo_df[D4_geo_df.loc[:, 'Full_Address'].str.contains(r'\b^\w+\b', regex=True)]
 
     # <Letter><Digit
-    # D4_dwelling_letters_digit_df = D4_dwelling_df[
-    #     (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'^[A-Z]+[0-9]+\b', na=False, regex=True))]
+    D4_dwelling_letters_digit_df = D4_dwelling_df[
+        (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'^[A-Z]+[0-9]+\b', na=False, regex=True))]
 
 
-    #filter = D4_dwelling_letters_only_df[D4_dwelling_letters_only_df.loc[:,'Dwelling AddressLine1'].str.contains(r'\bAPARTMENT 53 WELLINGTON COURT\b',regex=True)]
-    #filter.iloc[0]['Dwelling AddressLine1']
+    #filter = D4_dwelling_letters_digit_df[D4_dwelling_letters_digit_df.loc[:,'Dwelling AddressLine1'].str.contains(r'\bFLAT 86\b',regex=True)]
+   # filter.iloc[0]['Dwelling AddressLine1']
 
     tqdm.pandas()
     print '     Dealing with only num or building:'
     D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,), axis=1)
-    # print '     Dealing with building:'
+    print '     Dealing with building:'
     D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,), axis=1)
     print '     Dealing with group contain <num><letter>'
     D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,), axis=1)
@@ -302,8 +300,8 @@ def main():
     print "Initializing data"
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling_df = pd.read_csv(path+'Sample_Data3.csv',skipinitialspace=True,low_memory=False).fillna('')
-    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -367,7 +365,7 @@ def main():
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
-    each_type_dublin.to_csv(path_or_buf='Only_Dublin1.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Only_Dublin1_2.csv', index=None, header=True)
 
     # for j in counties:
     #     print j
@@ -379,7 +377,7 @@ def main():
     #county_dwellingdf_dict[''] = dwelling_df[dwelling_df.loc[:, 'MPRN county'] == '']
     #dwelling_df_counties_replace.update(D2_dwelling)
 
-    #dwelling_df_counties_replace.to_csv(path_or_buf='Only_Dublin1.csv', index=None, header=True)
+    #dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new12.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
