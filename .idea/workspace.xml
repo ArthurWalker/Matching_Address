@@ -38,29 +38,38 @@
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="csv" value="2" />
-          <entry key="py" value="99" />
+          <entry key="py" value="100" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="CSV" value="2" />
-          <entry key="Python" value="99" />
+          <entry key="Python" value="100" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="true">
+      <file pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/Opening_File.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="685">
-              <caret line="45" column="48" selection-start-line="45" selection-start-column="48" selection-end-line="45" selection-end-column="48" />
+            <state relative-caret-position="702">
+              <caret line="46" column="14" lean-forward="true" selection-start-line="46" selection-start-column="14" selection-end-line="46" selection-end-column="14" />
               <folding>
                 <element signature="e#0#19#0" expanded="true" />
                 <marker date="1540899178355" expanded="true" signature="49:51" ph="..." />
                 <marker date="1540899178355" expanded="true" signature="62:342" ph="..." />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file pinned="false" current-in-tab="true">
+        <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state relative-caret-position="770">
+              <caret line="303" column="79" lean-forward="true" selection-start-line="303" selection-start-column="79" selection-end-line="303" selection-end-column="79" />
             </state>
           </provider>
         </entry>
@@ -122,6 +131,7 @@
     </replaceStrings>
   </component>
   <component name="Git.Settings">
+    <option name="ROOT_SYNC" value="DONT_SYNC" />
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
   </component>
   <component name="IdeDocumentHistory">
@@ -168,7 +178,7 @@
   </component>
   <component name="PropertiesComponent">
     <property name="last_opened_file_path" value="$PROJECT_DIR$/../OpenData" />
-    <property name="settings.editor.selected.configurable" value="com.jetbrains.python.configuration.PyActiveSdkModuleConfigurable" />
+    <property name="settings.editor.selected.configurable" value="vcs.Git" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -329,7 +339,6 @@
   </component>
   <component name="ToolWindowManager">
     <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
-    <editor active="true" />
     <layout>
       <window_info active="true" content_ui="combo" id="Project" order="0" sideWeight="0.49729145" visible="true" weight="0.16807166" />
       <window_info id="Structure" order="1" sideWeight="0.50270855" side_tool="true" visible="true" weight="0.16807166" />
@@ -642,36 +651,22 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="617">
-          <caret line="294" column="54" lean-forward="true" selection-start-line="294" selection-start-column="54" selection-end-line="294" selection-end-column="54" />
-          <folding>
-            <element signature="e#224#306#0" />
-            <element signature="e#237#616#0" />
-            <element signature="e#185#552#0" />
-            <element signature="e#194#238#0" />
-            <element signature="e#1460#2097#0" />
-            <element signature="e#2406#5905#0" />
-            <element signature="e#6066#9632#0" />
-            <element signature="e#9436#12610#0" />
-            <marker date="1540899534062" expanded="true" signature="157:340" ph="..." />
-            <marker date="1540899534062" expanded="true" signature="374:829" ph="..." />
-            <marker date="1540899534062" expanded="true" signature="1492:2430" ph="..." />
-            <marker date="1540899534062" expanded="true" signature="1492:2447" ph="..." />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Opening_File.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="685">
-          <caret line="45" column="48" selection-start-line="45" selection-start-column="48" selection-end-line="45" selection-end-column="48" />
+        <state relative-caret-position="702">
+          <caret line="46" column="14" lean-forward="true" selection-start-line="46" selection-start-column="14" selection-end-line="46" selection-end-column="14" />
           <folding>
             <element signature="e#0#19#0" expanded="true" />
             <marker date="1540899178355" expanded="true" signature="49:51" ph="..." />
             <marker date="1540899178355" expanded="true" signature="62:342" ph="..." />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="770">
+          <caret line="303" column="79" lean-forward="true" selection-start-line="303" selection-start-column="79" selection-end-line="303" selection-end-column="79" />
         </state>
       </provider>
     </entry>
