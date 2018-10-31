@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ChangeListManager">
     <list default="true" id="c3bd0566-aee4-4d76-a4bb-6c1bd311897b" name="Default Changelist" comment="" />
+    <ignored path=".idea/" />
     <option name="EXCLUDED_CONVERTED_TO_IGNORED" value="true" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -27,25 +28,25 @@
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
           <entry key="Python Console" value="1703" />
-          <entry key="py" value="28252" />
+          <entry key="py" value="28336" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="29954" />
+          <entry key="Python" value="30038" />
           <entry key="RegExp" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="csv" value="2" />
-          <entry key="py" value="102" />
+          <entry key="py" value="104" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="CSV" value="2" />
-          <entry key="Python" value="102" />
+          <entry key="Python" value="104" />
         </counts>
       </usages-collector>
     </session>
@@ -69,19 +70,17 @@
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="82">
-              <caret line="326" selection-start-line="326" selection-end-line="331" selection-end-column="122" />
+            <state relative-caret-position="3788">
+              <caret line="419" column="17" lean-forward="true" selection-start-line="419" selection-start-column="17" selection-end-line="419" selection-end-column="17" />
               <folding>
                 <element signature="e#162#338#0" />
                 <element signature="e#379#827#0" />
                 <element signature="e#861#1364#0" />
                 <element signature="e#1407#1451#0" />
                 <element signature="e#1497#2445#0" />
-                <element signature="e#2480#3557#0" />
                 <element signature="e#2492#5918#0" />
-                <element signature="e#5972#9386#0" />
                 <element signature="e#9435#12586#0" />
-                <marker date="1540919422773" expanded="true" signature="2475:3646" ph="..." />
+                <marker date="1540982186076" expanded="true" signature="2475:3733" ph="..." />
               </folding>
             </state>
           </provider>
@@ -120,7 +119,6 @@
       <find>LATITUTE</find>
       <find>iloc</find>
       <find>row['Status']</find>
-      <find>replace</find>
       <find>list</find>
       <find>\</find>
       <find>or search_thoroughfare.shape[0]==</find>
@@ -128,6 +126,7 @@
       <find>last_search</find>
       <find>None</find>
       <find>fix_mis</find>
+      <find>replace</find>
     </findStrings>
     <replaceStrings>
       <replace>DUBLIN</replace>
@@ -163,7 +162,7 @@
       </list>
     </option>
   </component>
-  <component name="ProjectFrameBounds" extendedState="7">
+  <component name="ProjectFrameBounds" extendedState="6">
     <option name="x" value="239" />
     <option name="y" value="166" />
     <option name="width" value="996" />
@@ -190,8 +189,8 @@
     </panes>
   </component>
   <component name="PropertiesComponent">
-    <property name="last_opened_file_path" value="$PROJECT_DIR$/../OpenData" />
-    <property name="settings.editor.selected.configurable" value="vcs.Git" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/.idea" />
+    <property name="settings.editor.selected.configurable" value="project.propVCSSupport.Ignored.Files" />
   </component>
   <component name="RunDashboard">
     <option name="ruleStates">
@@ -394,6 +393,17 @@
   </component>
   <component name="VcsContentAnnotationSettings">
     <option name="myLimit" value="2678400000" />
+  </component>
+  <component name="XDebuggerManager">
+    <breakpoint-manager>
+      <breakpoints>
+        <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
+          <url>file://$PROJECT_DIR$/Geo_Dwelling_Data.py</url>
+          <line>176</line>
+          <option name="timeStamp" value="122" />
+        </line-breakpoint>
+      </breakpoints>
+    </breakpoint-manager>
   </component>
   <component name="debuggerHistoryManager">
     <expressions id="watch">
@@ -650,13 +660,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/tqdm/_tqdm.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="171">
-          <caret line="615" selection-start-line="615" selection-end-line="615" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Letter_No_Apart.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="-255">
@@ -704,21 +707,33 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/tqdm/_tqdm.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="171">
+          <caret line="655" selection-start-line="655" selection-end-line="655" />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/pandas/core/apply.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="164">
+          <caret line="276" selection-start-line="276" selection-end-line="276" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="82">
-          <caret line="326" selection-start-line="326" selection-end-line="331" selection-end-column="122" />
+        <state relative-caret-position="3788">
+          <caret line="419" column="17" lean-forward="true" selection-start-line="419" selection-start-column="17" selection-end-line="419" selection-end-column="17" />
           <folding>
             <element signature="e#162#338#0" />
             <element signature="e#379#827#0" />
             <element signature="e#861#1364#0" />
             <element signature="e#1407#1451#0" />
             <element signature="e#1497#2445#0" />
-            <element signature="e#2480#3557#0" />
             <element signature="e#2492#5918#0" />
-            <element signature="e#5972#9386#0" />
             <element signature="e#9435#12586#0" />
-            <marker date="1540919422773" expanded="true" signature="2475:3646" ph="..." />
+            <marker date="1540982186076" expanded="true" signature="2475:3733" ph="..." />
           </folding>
         </state>
       </provider>

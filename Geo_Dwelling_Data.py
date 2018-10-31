@@ -67,6 +67,7 @@ def fuzzy_process(search_num,row,dwel):
 def search_MPRN(row,geo_df):
     search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street']))]
     search_num = None
+    search_apart = None
     if (search_thoroughfare.shape[0]>0):
         search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']))]
     if len(row['MPRN unit no'])!=0:
@@ -74,13 +75,14 @@ def search_MPRN(row,geo_df):
             search_apart = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']))]
         else:
             search_apart = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']))]
-    if (search_apart.shape[0]==1):
-        row = match_process(row, search_apart)
-    elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
-        row['Status'] = 'SAME_SA'
-        row['SMALL_AREA_REF'] = search_apart.iloc[0]['SMALL_AREA_REF']
-    elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
-        row = fuzzy_process(search_apart, row, row['MPRN Address'])
+    if (search_apart is not None):
+        if (search_apart.shape[0]==1):
+            row = match_process(row, search_apart)
+        elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
+            row['Status'] = 'SAME_SA'
+            row['SMALL_AREA_REF'] = search_apart.iloc[0]['SMALL_AREA_REF']
+        elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
+            row = fuzzy_process(search_apart, row, row['MPRN Address'])
     else:
         row['Status']='CANT FIND'
     return row
@@ -223,8 +225,10 @@ def search_letter_first(row,D4_geo_letters_df):
                 if (search_thoroughfare.shape[0] > 0 and len(search_thoroughfare['SMALL_AREA_REF'].unique()) == 1):
                     row['Status'] = 'SAME_SA_NO_NUMs'
                     row['SMALL_AREA_REF'] = search_thoroughfare.iloc[0]['SMALL_AREA_REF']
+                else:
+                    row = search_MPRN(row, D4_geo_letters_df)
         else:
-            row = search_dwelling(row,D4_geo_letters_df)
+            row = search_MPRN(row,D4_geo_letters_df)
     except Exception as ex:
         print(type(ex))  # the exception instance # arguments stored in .args
         print(ex)
@@ -324,18 +328,18 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
    # filter.iloc[0]['Dwelling AddressLine1']
 
     tqdm.pandas()
-    print '     Dealing with only num or building:'
-    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,), axis=1)
-    print '     Dealing with building:'
-    D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,), axis=1)
-    print '     Dealing with group contain <num><letter>'
-    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,), axis=1)
+    # print '     Dealing with only num or building:'
+    # D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,), axis=1)
+    # print '     Dealing with building:'
+    # D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,), axis=1)
+    # print '     Dealing with group contain <num><letter>'
+    # D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,), axis=1)
     print '     Dealing with group starting with letters:'
     D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,), axis=1)
 
-    D4_dwelling_df.update(D4_dwelling_num_only_df)
-    D4_dwelling_df.update(D4_dwelling_numm_withNOAPART_df)
-    D4_dwelling_df.update(D4_dwelling_num_letter_df)
+    # D4_dwelling_df.update(D4_dwelling_num_only_df)
+    # D4_dwelling_df.update(D4_dwelling_numm_withNOAPART_df)
+    # D4_dwelling_df.update(D4_dwelling_num_letter_df)
     D4_dwelling_df.update(D4_dwelling_letters_only_df)
 
     return D4_dwelling_df
@@ -345,8 +349,8 @@ def main():
     print "Initializing data"
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling_df = pd.read_csv(path+'Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
-    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Blank_D1.csv',skipinitialspace=True,low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -405,19 +409,19 @@ def main():
 
     for i in dublin_cities:
         print i
-        # if i =='DUBLIN 2':
-        #     break
+        if i =='DUBLIN 2':
+            break
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
-    #each_type_dublin.to_csv(path_or_buf='Only_Dublin1.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Only_Dublin_1_2.csv', index=None, header=True)
 
-    for j in counties:
-        print j
-        # if (j == 'CAVAN'):
-        #     break
-        each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-        dwelling_df_counties_replace.update(each_type_county)
+    # for j in counties:
+    #     print j
+    #     # if (j == 'CAVAN'):
+    #     #     break
+    #     each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #     dwelling_df_counties_replace.update(each_type_county)
 
     #county_dwellingdf_dict[''] = dwelling_df[dwelling_df.loc[:, 'MPRN county'] == '']
     #dwelling_df_counties_replace.update(D2_dwelling)
