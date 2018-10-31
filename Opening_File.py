@@ -7,7 +7,7 @@ def main():
     #os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
     #dwelling = pd.read_csv(path+'Only_Dublin1.csv', skipinitialspace=True, low_memory=False).fillna('')
-    dwelling = pd.read_csv('Only_Dublin_1_2.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv('Only_Dublin_1_1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling.shape[0]
     # list_county = ['DUBLIN ']*13
     # for i in range(len(list_county)):
