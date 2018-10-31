@@ -68,20 +68,24 @@ def search_MPRN(row,geo_df):
     #row = row.replace(r'\b[FLAT|APT|BASEMENT|FLOOR|GROUND|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER]\b','',inplace=False, regex=True)
     row = row.replace(r'\s{2,}',' ',inplace=False, regex=True)
     row = row.str.strip()
-    search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street']))]
+    search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street'].strip()),regex=True)]
     search_num = None
     search_apart = None
     if (search_thoroughfare.shape[0]>0):
-        search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']))]
+        search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
     else:
-        search_thoroughfare = geo_df[geo_df.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN address4']))]
+        search_thoroughfare = geo_df[geo_df.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN address4'].strip()),regex=True)]
         if (search_thoroughfare.shape[0] > 0):
-            search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']))]
+            search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
     if len(row['MPRN unit no'])!=0:
+        if ('APARTMENT' in row['MPRN unit no']):
+            row['MPRN unit no']= re.sub(r'\bAPARTMENT\b','',row['MPRN unit no'])
+            #row['MPRN unit no'] = re.sub(r'\s{2,}', ' ', row['MPRN unit no'])
+            #row['MPRN unit no'] = row['MPRN unit no'].str.strip()
         if (search_num is not None and search_num.shape[0]>0):
-            search_apart = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']))]
+            search_apart = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no'].strip()), regex=True)]
         else:
-            search_apart = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']))]
+            search_apart = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no'].strip()),regex=True)]
     if (search_apart is not None):
         if (search_apart.shape[0]==1):
             row = match_process(row, search_apart)
@@ -92,6 +96,7 @@ def search_MPRN(row,geo_df):
             row = fuzzy_process(search_apart, row, row['MPRN Address'])
     else:
         row['Status']='CANT FIND'
+
     return row
 
 def search_dwelling(row,geo_df):
@@ -398,10 +403,12 @@ def main():
 
     geo_df['Fuzzy'] = ""
     geo_df['Status'] = ""
-    geo_df['Full_Address'] = geo_df['ADDR_LINE_1'] + " " + geo_df['ADDR_LINE_2'] + " " + geo_df['ADDR_LINE_3'] + " " + \
+    geo_df['Full_Address'] = (geo_df['ADDR_LINE_1'] + " " + geo_df['ADDR_LINE_2'] + " " + geo_df['ADDR_LINE_3'] + " " + \
                              geo_df['ADDR_LINE_4'] + " " + geo_df['ADDR_LINE_5'] + " " + geo_df['ADDR_LINE_6'] + " " + \
                              geo_df['ADDR_LINE_7'] + " " + geo_df['ADDR_LINE_8'] + " " + geo_df['ADDR_LINE_9'] + " " + \
-                             geo_df['ADDR_LINE_10']
+                             geo_df['ADDR_LINE_10'])
+    geo_df['Full_Address'] = geo_df['Full_Address'].apply(lambda x: x.strip())
+    geo_df['Full_Address'] = geo_df['Full_Address'].apply(lambda x: x.rsplit(' ', 1)[0])
     dwelling_df['Status'] = ""
     dwelling_df['Percent_Match']=""
     dwelling_df['BUILDING_ID'] = ""
@@ -429,7 +436,7 @@ def main():
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
-    each_type_dublin.to_csv(path_or_buf='Only_Dublin_1_2.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Only_Dublin_1_1.csv', index=None, header=True)
 
     # for j in counties:
     #     print j
