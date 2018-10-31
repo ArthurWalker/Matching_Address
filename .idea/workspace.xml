@@ -27,60 +27,42 @@
       </usages-collector>
       <usages-collector id="statistics.file.extensions.edit">
         <counts>
-          <entry key="Python Console" value="1703" />
-          <entry key="py" value="28336" />
+          <entry key="Python Console" value="1848" />
+          <entry key="py" value="28529" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.edit">
         <counts>
-          <entry key="Python" value="30038" />
+          <entry key="Python" value="30376" />
           <entry key="RegExp" value="1" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.extensions.open">
         <counts>
           <entry key="csv" value="2" />
-          <entry key="py" value="104" />
+          <entry key="py" value="105" />
         </counts>
       </usages-collector>
       <usages-collector id="statistics.file.types.open">
         <counts>
           <entry key="CSV" value="2" />
-          <entry key="Python" value="104" />
+          <entry key="Python" value="105" />
         </counts>
       </usages-collector>
     </session>
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/Opening_File.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="765">
-              <caret line="45" column="75" lean-forward="true" selection-start-line="45" selection-start-column="75" selection-end-line="45" selection-end-column="75" />
-              <folding>
-                <element signature="e#0#19#0" expanded="true" />
-                <marker date="1540916952904" expanded="true" signature="49:51" ph="..." />
-                <marker date="1540916952904" expanded="true" signature="62:338" ph="..." />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state relative-caret-position="3788">
-              <caret line="419" column="17" lean-forward="true" selection-start-line="419" selection-start-column="17" selection-end-line="419" selection-end-column="17" />
+            <state relative-caret-position="307">
+              <caret line="81" column="38" lean-forward="true" selection-start-line="81" selection-start-column="38" selection-end-line="81" selection-end-column="38" />
               <folding>
                 <element signature="e#162#338#0" />
-                <element signature="e#379#827#0" />
-                <element signature="e#861#1364#0" />
-                <element signature="e#1407#1451#0" />
-                <element signature="e#1497#2445#0" />
-                <element signature="e#2492#5918#0" />
-                <element signature="e#9435#12586#0" />
-                <marker date="1540982186076" expanded="true" signature="2475:3733" ph="..." />
+                <element signature="e#4122#5158#0" />
+                <element signature="e#5205#8686#0" />
+                <element signature="e#12455#15709#0" />
               </folding>
             </state>
           </provider>
@@ -97,11 +79,6 @@
   </component>
   <component name="FindInProjectRecents">
     <findStrings>
-      <find>search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]</find>
-      <find>replac</find>
-      <find>2</find>
-      <find>row</find>
-      <find>apply</find>
       <find>and</find>
       <find>_</find>
       <find>Dwelling_AddressLine</find>
@@ -127,6 +104,11 @@
       <find>None</find>
       <find>fix_mis</find>
       <find>replace</find>
+      <find>'SMALL_AREA_REF</find>
+      <find>row[row.loc[:, 'Full_Address']]</find>
+      <find>'Any[{0}]'.format(row[row.loc[:, 'Full_Address']])</find>
+      <find>'Any[{0}]'.format(row[row.iloc[0, 'Full_Address']])</find>
+      <find>row['Geo_Address'] = 'Any[{0}]'.format(row[row.iloc[0, 'Full_Address']])</find>
     </findStrings>
     <replaceStrings>
       <replace>DUBLIN</replace>
@@ -140,6 +122,8 @@
       <replace>3</replace>
       <replace>.</replace>
       <replace>/</replace>
+      <replace>row[row.loc[0, 'Full_Address']]</replace>
+      <replace>'Any[{0}]'.format(row[row.iloc[0, 'Full_Address']])</replace>
     </replaceStrings>
   </component>
   <component name="Git.Settings">
@@ -399,8 +383,8 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="python-line">
           <url>file://$PROJECT_DIR$/Geo_Dwelling_Data.py</url>
-          <line>176</line>
-          <option name="timeStamp" value="122" />
+          <line>73</line>
+          <option name="timeStamp" value="126" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>
@@ -624,13 +608,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/pandas/io/common.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="198">
-          <caret line="396" selection-start-line="396" selection-end-line="396" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/som_testing.py">
       <provider selected="true" editor-type-id="text-editor">
         <state relative-caret-position="153">
@@ -721,19 +698,22 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/venv/Lib/site-packages/pandas/io/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state relative-caret-position="198">
+          <caret line="396" selection-start-line="396" selection-end-line="396" />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/Geo_Dwelling_Data.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state relative-caret-position="3788">
-          <caret line="419" column="17" lean-forward="true" selection-start-line="419" selection-start-column="17" selection-end-line="419" selection-end-column="17" />
+        <state relative-caret-position="307">
+          <caret line="81" column="38" lean-forward="true" selection-start-line="81" selection-start-column="38" selection-end-line="81" selection-end-column="38" />
           <folding>
             <element signature="e#162#338#0" />
-            <element signature="e#379#827#0" />
-            <element signature="e#861#1364#0" />
-            <element signature="e#1407#1451#0" />
-            <element signature="e#1497#2445#0" />
-            <element signature="e#2492#5918#0" />
-            <element signature="e#9435#12586#0" />
-            <marker date="1540982186076" expanded="true" signature="2475:3733" ph="..." />
+            <element signature="e#4122#5158#0" />
+            <element signature="e#5205#8686#0" />
+            <element signature="e#12455#15709#0" />
           </folding>
         </state>
       </provider>
