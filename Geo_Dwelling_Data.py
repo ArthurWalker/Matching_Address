@@ -88,6 +88,7 @@ def fuzzy_process(search_num,row,dwel):
     return row
 
 def search_MPRN(row,geo_df):
+    cant_find=False
     #row = row.replace(r'\b[FLAT|APT|BASEMENT|FLOOR|GROUND|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER]\b','',inplace=False, regex=True)
     row = row.replace(r'\s{2,}',' ',inplace=False, regex=True)
     row = row.str.strip()
@@ -117,9 +118,12 @@ def search_MPRN(row,geo_df):
             row['SMALL_AREA_REF'] = search_apart.iloc[0]['SMALL_AREA_REF']
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
             row = fuzzy_process(search_apart, row, row['MPRN Address'])
+        else:
+            cant_find=True
     else:
+        cant_find = True
+    if (cant_find):
         row['Status']='CANT FIND'
-
     return row
 
 def search_dwelling(row,geo_df):
@@ -395,7 +399,7 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
 def main():
     start_time = time.time()
     print "Initializing data"
-    path = os.path.join('')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
     dwelling_df = pd.read_csv(path+'Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
@@ -452,10 +456,6 @@ def main():
     dwelling_county= dwelling_df_counties_replace.groupby('MPRN county')
     geo_county =  geo_df.groupby('COUNTY')
 
-    #filter_result = dwelling_df_counties_replace[dwelling_df_counties_replace.loc[:,'MPRN county']=='ANTRIM']
-
-    #dwelling_df_counties_replace.update(process_each_category(dwelling_dublin.get_group('DUBLIN 4'),geo_dublin.get_group('DUBLIN 4')))
-
     for i in dublin_cities:
         print i
         # if i =='DUBLIN 2':
@@ -471,9 +471,6 @@ def main():
         #     break
         each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
         dwelling_df_counties_replace.update(each_type_county)
-
-    #county_dwellingdf_dict[''] = dwelling_df[dwelling_df.loc[:, 'MPRN county'] == '']
-    #dwelling_df_counties_replace.update(D2_dwelling)
 
     dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new13.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
