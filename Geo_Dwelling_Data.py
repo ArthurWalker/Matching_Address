@@ -65,7 +65,7 @@ def fuzzy_process(search_num,row,dwel):
     return row
 
 def search_MPRN(row,geo_df):
-    #row = row.replace(r'\b[FLAT|APT|BASEMENT|FLOOR|GROUND|1ST|2ND|3RD|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER]\b','',inplace=False, regex=True)
+    #row = row.replace(r'\b[FLAT|APT|BASEMENT|FLOOR|GROUND|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER]\b','',inplace=False, regex=True)
     row = row.replace(r'\s{2,}',' ',inplace=False, regex=True)
     row = row.str.strip()
     search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street']))]
@@ -73,6 +73,10 @@ def search_MPRN(row,geo_df):
     search_apart = None
     if (search_thoroughfare.shape[0]>0):
         search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']))]
+    else:
+        search_thoroughfare = geo_df[geo_df.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN address4']))]
+        if (search_thoroughfare.shape[0] > 0):
+            search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']))]
     if len(row['MPRN unit no'])!=0:
         if (search_num is not None and search_num.shape[0]>0):
             search_apart = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']))]
@@ -425,7 +429,7 @@ def main():
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
-    each_type_dublin.to_csv(path_or_buf='Only_Dublin_1.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Only_Dublin_1_2.csv', index=None, header=True)
 
     # for j in counties:
     #     print j
