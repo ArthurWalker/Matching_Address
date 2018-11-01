@@ -120,6 +120,16 @@ def search_MPRN(row,geo_df):
             row = fuzzy_process(search_apart, row, row['MPRN Address'])
         else:
             cant_find=True
+    elif search_num is not None:
+        if (search_num.shape[0]==1):
+            row = match_process(row, search_num)
+        elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
+            row['Status'] = 'SAME_SA'
+            row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
+        elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
+            row = fuzzy_process(search_num, row, row['MPRN Address'])
+        else:
+            cant_find=True
     else:
         cant_find = True
     if (cant_find):
@@ -192,7 +202,7 @@ def search_num_first(row,D4_geo_num_df):
                     if (len(search_num['SMALL_AREA_REF'].unique())==1):
                         row['Status']='SAME_SA'
                         row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
-                        
+
                     else:
                         #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
                         # Search by fuzzy wuzzy
@@ -202,7 +212,6 @@ def search_num_first(row,D4_geo_num_df):
             if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
                 row['Status']='SAME_SA_NO_NUMs'
                 row['SMALL_AREA_REF'] = search_thorougfare.iloc[0]['SMALL_AREA_REF']
-                
             else:
                 row = search_MPRN(row,D4_geo_num_df)
     except Exception as ex:
@@ -460,7 +469,7 @@ def main():
 
     for i in dublin_cities:
         print i
-        if i =='DUBLIN 2':
+        if i =='DUBLIN 4':
             break
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
