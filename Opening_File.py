@@ -4,11 +4,11 @@ import numpy as np
 
 
 def main():
-    #os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    #dwelling = pd.read_csv(path+'Only_Dublin1.csv', skipinitialspace=True, low_memory=False).fillna('')
-    dwelling = pd.read_csv('Only_Dublin_1_1.csv', skipinitialspace=True, low_memory=False).fillna('')
-    dwelling.shape[0]
+    #dwelling = pd.read_csv(path+'.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv(path+'Geo_D1_D3.csv', skipinitialspace=True, low_memory=False).fillna('')
+    #dwelling.shape[0]
     # list_county = ['DUBLIN ']*13
     # for i in range(len(list_county)):
     #     list_county[i]+=str(i+1)
@@ -38,12 +38,13 @@ def main():
     # perc_perf_matche = float(total_match)/(total)*100
     # perc_almost_matche = float(total_result_almost_match)/(total)*100
 
-    dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|CANT FIND|MANY RESULTS|SAME_SA_NO_NUMs',regex=True)]
-    #dwelling_df.shape[0]
+    #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|CANT FIND|MANY RESULTS|SAME_SA_NO_NUMs',regex=True)]
+    #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
+    dwelling_df = dwelling[dwelling['PRINCIPAL_POST_TOWN'].isin(['DUBLIN 1','DUBLIN 2','DUBLIN 3'])]
     #sample_df = dwelling_df.sample(n=4000)
     #sample_df = sample_df.apply(pick_rand)
 
-    dwelling_df.to_csv(path_or_buf='Blank_D1.csv', index=None, header=True)
+    dwelling_df.to_csv(path_or_buf='CANT_FIND_D1_D3.csv', index=None, header=True)
     print 'Hi'
 
 

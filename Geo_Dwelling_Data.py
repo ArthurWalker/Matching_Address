@@ -403,8 +403,8 @@ def main():
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling_df = pd.read_csv(path+'Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
-    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'CANT_FIND_D1_D3.csv',skipinitialspace=True,low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'Geo_D1_D3.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -460,21 +460,21 @@ def main():
 
     for i in dublin_cities:
         print i
-        # if i =='DUBLIN 2':
-        #     break
+        if i =='DUBLIN 2':
+            break
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
-    #each_type_dublin.to_csv(path_or_buf='Only_Dublin_1_1.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Checking_Dublin_1_to_3.csv', index=None, header=True)
 
-    for j in counties:
-        print j
-        # if (j == 'CAVAN'):
-        #     break
-        each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-        dwelling_df_counties_replace.update(each_type_county)
-
-    dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new13.csv', index=None, header=True)
+    # for j in counties:
+    #     print j
+    #     # if (j == 'CAVAN'):
+    #     #     break
+    #     each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #     dwelling_df_counties_replace.update(each_type_county)
+    #
+    # dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new13.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
