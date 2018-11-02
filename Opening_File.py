@@ -7,7 +7,7 @@ def main():
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
     #dwelling = pd.read_csv(path+'.csv', skipinitialspace=True, low_memory=False).fillna('')
-    dwelling = pd.read_csv(path+'Checking_Dublin_1_to_3.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv(path+'Reformat2.csv', skipinitialspace=True, low_memory=False).fillna('')
     #dwelling.shape[0]
     # list_county = ['DUBLIN ']*13
     # for i in range(len(list_county)):
@@ -39,16 +39,17 @@ def main():
     # perc_almost_matche = float(total_result_almost_match)/(total)*100
 
     #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|CANT FIND|MANY RESULTS|SAME_SA_NO_NUMs',regex=True)]
-    dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
+    #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
     #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS|SAME_SA_NO_NUMs', regex=True)]
-    #dwelling_df = dwelling[dwelling['PRINCIPAL_POST_TOWN'].isin(['DUBLIN 1','DUBLIN 2','DUBLIN 3'])]
+    dwelling_df = dwelling[dwelling['MPRN city'].isin(['DUBLIN 3'])]
+    #dwelling_df = dwelling[['PRINCIPAL_POST_TOWN']== 'DUBLIN 3']
     #sample_df = dwelling_df.sample(n=4000)
     #sample_df = sample_df.apply(pick_rand)
 
     # dwelling_df = dwelling[dwelling.loc[:,'MPRN house no']=='']
     # dwelling_df = dwelling_df[dwelling_df.loc[:,'MPRN unit no']=='']
 
-    dwelling_df.to_csv(path_or_buf='CANT_FIND_D1_D3.csv', index=None, header=True)
+    dwelling_df.to_csv(path_or_buf='Dwelling_D3.csv', index=None, header=True)
     print 'Hi'
 
 

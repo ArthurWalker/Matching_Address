@@ -419,7 +419,7 @@ def main():
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling_df = pd.read_csv('Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
@@ -478,11 +478,12 @@ def main():
         print i
         # if i =='DUBLIN 4':
         #     break
+        #if (i == 'DUBLIN 3'):
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
-    # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address']]
-    # dwelling_df_counties_replace.to_csv(path_or_buf='Checking_Dublin_1_to_3.csv', index=None, header=True)
+    # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
+    # dwelling_df_counties_replace.to_csv(path_or_buf='Checking_Dublin_3.csv', index=None, header=True)
 
     for j in counties:
         print j
