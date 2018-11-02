@@ -47,7 +47,7 @@ def search_for_misspell(row,geo_df,df_thoroughfare,col):
     df_thoroughfare['Fuzzy']=df_thoroughfare['THOROUGHFARE'].apply(search_fuzzy_token, args=(term,))
     if (df_thoroughfare['Fuzzy'].max()>95):
         street = df_thoroughfare[df_thoroughfare['Fuzzy']==df_thoroughfare['Fuzzy'].max()]
-        row[col]=street['THOROUGHFARE']
+        row[col]=street.iloc[0]['THOROUGHFARE']
     return row
 
 def fix_misspell(df):
@@ -165,28 +165,28 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         row['Status']='CANT FIND'
     return row
 
-def search_dwelling(row,geo_df,df_thoroughfare):
-    row_data = row['Dwelling AddressLine1']+" "+row['Dwelling AddressLine2']+" "+row['Dwelling AddressLine3']
-    row_data = re.sub(r'\bFLAT|APT|BASEMENT|FLOOR|GROUND|1ST|2ND|3RD|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER\b','',row_data)
-    row_data = re.sub(r'\s{2,}',' ',row_data)
-    row_data = row_data.strip()
-    list_word = row_data.split(' ')
-    search = geo_df
-    for word in list_word:
-        temp = search[search.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(word), regex=True)]
-        if (temp is not None or temp.shape[0] >0):
-            search = temp
-    if (search.shape[0]==1):
-        row = match_process(row, search)
-    elif (search.shape[0] > 1 and len(search['SMALL_AREA_REF'].unique()) == 1):
-        row['Status'] = 'SAME_SA'
-        row['SMALL_AREA_REF'] = search.iloc[0]['SMALL_AREA_REF']
-
-    elif (search.shape[0] > 1 and len(search['SMALL_AREA_REF'].unique()) != 1):
-        row = fuzzy_process(search, row, row_data)
-    else:
-        row = search_MPRN(row,geo_df,df_thoroughfare)
-    return row
+# def search_dwelling(row,geo_df,df_thoroughfare):
+#     row_data = row['Dwelling AddressLine1']+" "+row['Dwelling AddressLine2']+" "+row['Dwelling AddressLine3']
+#     #row_data = re.sub(r'\bFLAT|APT|BASEMENT|FLOOR|GROUND|1ST|2ND|3RD|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER\b','',row_data)
+#     row_data = re.sub(r'\s{2,}',' ',row_data)
+#     row_data = row_data.strip()
+#     list_word = row_data.split(' ')
+#     search = geo_df
+#     for word in list_word:
+#         temp = search[search.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(word), regex=True)]
+#         if (temp is not None or temp.shape[0] >0):
+#             search = temp
+#     if (search.shape[0]==1):
+#         row = match_process(row, search)
+#     elif (search.shape[0] > 1 and len(search['SMALL_AREA_REF'].unique()) == 1):
+#         row['Status'] = 'SAME_SA'
+#         row['SMALL_AREA_REF'] = search.iloc[0]['SMALL_AREA_REF']
+#
+#     elif (search.shape[0] > 1 and len(search['SMALL_AREA_REF'].unique()) != 1):
+#         row = fuzzy_process(search, row, row_data)
+#     else:
+#         row = search_MPRN(row,geo_df,df_thoroughfare)
+#     return row
 
 def search_num_first(row,D4_geo_num_df,df_thoroughfare):
     #try:
@@ -243,7 +243,6 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
             row['SMALL_AREA_REF'] = search_thorougfare.iloc[0]['SMALL_AREA_REF']
             row['Geo_Address'] = list(search_thorougfare.Full_Address)[0]
         else:
-            df_thoroughfare =pd.DataFrame({'THOROUGHFARE':D4_geo_num_df['THOROUGHFARE'].unique()})
             row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
     # except Exception as ex:
     #     print(type(ex))  # the exception instance # arguments stored in .args
@@ -509,6 +508,7 @@ def main():
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
+    dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address']]
     dwelling_df_counties_replace.to_csv(path_or_buf='Checking_Dublin_1_to_3.csv', index=None, header=True)
 
     # for j in counties:
