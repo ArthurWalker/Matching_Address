@@ -7,6 +7,17 @@ from fuzzywuzzy import fuzz
 import time
 from tqdm import tqdm
 
+def change_position_UPPER_LOWER(row):
+    if (row['MPRN street'].split(' ',1)[0] =='UPPER'):
+        row['MPRN street'] = row['MPRN street'].split(' ',1)[1]+" UPPER"
+    elif (row['MPRN street'].split(' ',1)[0] =='LOWER'):
+        row['MPRN street'] = row['MPRN street'].split(' ',1)[1]+" LOWER"
+    elif (row['MPRN address4'].split(' ',1)[0] =='UPPER'):
+        row['MPRN address4'] = row['MPRN address4'].split(' ',1)[1]+" UPPER"
+    elif (row['MPRN address4'].split(' ',1)[0] =='LOWER'):
+        row['MPRN address4'] = row['MPRN address4'].split(' ',1)[1]+" LOWER"
+    return row
+
 def reformat(row):
     row = row.strip()
     row = row.rsplit(' ',1)[0]
@@ -30,11 +41,23 @@ def reformat(row):
         row = re.sub(word[0], range_num, row)
     return row
 
+def search_for_misspell(row,geo_df,df_thoroughfare,col):
+    df_thoroughfare['Fuzzy']=""
+    term = row[col].strip()
+    df_thoroughfare['Fuzzy']=df_thoroughfare['THOROUGHFARE'].apply(search_fuzzy_token, args=(term,))
+    if (df_thoroughfare['Fuzzy'].max()>95):
+        street = df_thoroughfare[df_thoroughfare['Fuzzy']==df_thoroughfare['Fuzzy'].max()]
+        row[col]=street['THOROUGHFARE']
+    return row
+
 def fix_misspell(df):
     misspell= {
         r'\bSQAARE\b':'SQUARE',
         r'\bHOASE\b':'HOUSE',
-        r'\bAV\b':'AVENUE'
+        r'\bAV\b':'AVENUE',
+        r'\bWINTER GARDENS\b':'WINTER GARDEN',
+        r'\bKILLARNEY COURT\b':'KILLARNEY AVENUE',
+        r'\bGRANVILLE\b':'GRENVILLE'
     }
     df = df.replace(misspell,inplace=False, regex=True)
     return df
@@ -62,6 +85,9 @@ def remove_accents(string):
         string = re.sub(r'[u"ýÿ"]'.upper(), 'Y', string)
     return string
 
+def search_fuzzy_token(row,address):
+    return fuzz.token_sort_ratio(row,address)
+
 def search_fuzzy(row,address_to_cp):
     return fuzz.partial_ratio(row,address_to_cp)
 
@@ -71,41 +97,44 @@ def fuzzy_process(search_num,row,dwel):
         max_rows = search_num[search_num['Fuzzy'] == search_num['Fuzzy'].max()]
         if max_rows.shape[0] > 1:
             df = max_rows[max_rows.loc[:,'Full_Address'].str.contains(dwel,regex=True)]
-            if (df.shape[0]==1):
+            if (df.shape[0]==1 and df['Fuzzy']>65):
                 row = match_process(row,df)
                 row['Status']='MATCH_Fuzzy'
-                row['Percent_Match']=max_rows['Fuzzy'].max()
+                row['Percent_Match']=df['Fuzzy'].max()
             else:
-                #row['Status'] = list(search_num.ADDRESS_REFERENCE)
+                row['Geo_Address'] = list(search_num.Full_Address)[0]
                 row['Status']='MANY RESULTS'
         elif max_rows.shape[0]==1:
-            row = match_process(row, max_rows)
-            row['Status'] = 'MATCH_Fuzzy'
-            row['Percent_Match'] = max_rows['Fuzzy'].max()
+            if (max_rows['Fuzzy'].unique()>=65):
+                row = match_process(row, max_rows)
+                row['Status'] = 'MATCH_Fuzzy'
+                row['Percent_Match'] = max_rows['Fuzzy'].max()
     else:
-        # row['Status'] = list(search_num.ADDRESS_REFERENCE)
+        row['Geo_Address'] = list(search_num.Full_Address)[0]
         row['Status'] = 'MANY RESULTS'
     return row
 
-def search_MPRN(row,geo_df):
+def search_MPRN(row,geo_df,df_thoroughfare):
     cant_find=False
+    found_match=False
     #row = row.replace(r'\b[FLAT|APT|BASEMENT|FLOOR|GROUND|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER]\b','',inplace=False, regex=True)
     row = row.replace(r'\s{2,}',' ',inplace=False, regex=True)
     row = row.str.strip()
-    search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street'].strip()),regex=True)]
+    row = search_for_misspell(row, geo_df, df_thoroughfare, 'MPRN street')
+    search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street']),regex=True)]
     search_num = None
     search_apart = None
+    #row = change_position_UPPER_LOWER(row)
     if (search_thoroughfare.shape[0]>0):
         search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
     else:
-        search_thoroughfare = geo_df[geo_df.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN address4'].strip()),regex=True)]
+        row = search_for_misspell(row, geo_df, df_thoroughfare, 'MPRN address4')
+        search_thoroughfare = geo_df[geo_df.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN address4']),regex=True)]
         if (search_thoroughfare.shape[0] > 0):
             search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
     if len(row['MPRN unit no'])!=0:
         if ('APARTMENT' in row['MPRN unit no']):
             row['MPRN unit no']= re.sub(r'\bAPARTMENT\b','',row['MPRN unit no'])
-            #row['MPRN unit no'] = re.sub(r'\s{2,}', ' ', row['MPRN unit no'])
-            #row['MPRN unit no'] = row['MPRN unit no'].str.strip()
         if (search_num is not None and search_num.shape[0]>0):
             search_apart = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no'].strip()), regex=True)]
         else:
@@ -136,7 +165,7 @@ def search_MPRN(row,geo_df):
         row['Status']='CANT FIND'
     return row
 
-def search_dwelling(row,geo_df):
+def search_dwelling(row,geo_df,df_thoroughfare):
     row_data = row['Dwelling AddressLine1']+" "+row['Dwelling AddressLine2']+" "+row['Dwelling AddressLine3']
     row_data = re.sub(r'\bFLAT|APT|BASEMENT|FLOOR|GROUND|1ST|2ND|3RD|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER\b','',row_data)
     row_data = re.sub(r'\s{2,}',' ',row_data)
@@ -156,71 +185,73 @@ def search_dwelling(row,geo_df):
     elif (search.shape[0] > 1 and len(search['SMALL_AREA_REF'].unique()) != 1):
         row = fuzzy_process(search, row, row_data)
     else:
-        row = search_MPRN(row,geo_df)
+        row = search_MPRN(row,geo_df,df_thoroughfare)
     return row
 
-def search_num_first(row,D4_geo_num_df):
-    try:
-        dwel1 = (row['Dwelling AddressLine1'].strip())
-        dwel2 = (row['Dwelling AddressLine2'].strip())
-        dwel3 = (row['Dwelling AddressLine3'].strip())
-        # num part
-        if (re.search(r'\b^[0-9]+\b', dwel1)):
-            num = re.search(r'\b^[0-9]+\b', dwel1).group()
-            last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
-        elif (re.search(r'\b^[0-9]+[A-Z]+\b',dwel1)):
-            dit_let =re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).group()
-            last_digt = re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).end()
-            num = re.search(r'\b^[0-9]+', dit_let).group()
-        # later part: it can be digit+letters or letter. But 0 assume that they are letters
-        thoroughfare_dwel1 = dwel1[last_digit + 1:]  # this thorough can be the Building group name
-        # Search BUILDING_GROUP_NAME/ THOROUGHFARE:
-        if (len(thoroughfare_dwel1)==0):
-            thoroughfare_dwel1=dwel2
-        search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]
-        if (search_thorougfare.shape[0] == 0):
-            thoroughfare = dwel2
-            if bool(re.search(r'\b^[0-9]+\b', dwel2)):
-                num_dwel = re.search(r'\b^[0-9]+\b', dwel2).group()
-                last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
-                thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
-            search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
-        search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
-        if search_num.shape[0] == 1:
-            if (search_num.iloc[0]['Status']==""):
-                row = match_process(row, search_num)
-        elif search_num.shape[0] > 1:
-            num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
-            if (num_match.shape[0] == 1):
-                row = match_process(row,num_match)
-            else:
-                # Checking if it matches
-                last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
-                if (last_search.shape[0]):
-                    row = match_process(row, search_num)
-                else:
-                    if (len(search_num['SMALL_AREA_REF'].unique())==1):
-                        row['Status']='SAME_SA'
-                        row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
-
-                    else:
-                        #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
-                        # Search by fuzzy wuzzy
-                        # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
-                        row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1)
+def search_num_first(row,D4_geo_num_df,df_thoroughfare):
+    #try:
+    dwel1 = (row['Dwelling AddressLine1'].strip())
+    dwel2 = (row['Dwelling AddressLine2'].strip())
+    dwel3 = (row['Dwelling AddressLine3'].strip())
+    # num part
+    if (re.search(r'\b^[0-9]+\b', dwel1)):
+        num = re.search(r'\b^[0-9]+\b', dwel1).group()
+        last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
+    elif (re.search(r'\b^[0-9]+[A-Z]+\b',dwel1)):
+        dit_let =re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).group()
+        last_digt = re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).end()
+        num = re.search(r'\b^[0-9]+', dit_let).group()
+    # later part: it can be digit+letters or letter. But 0 assume that they are letters
+    thoroughfare_dwel1 = dwel1[last_digit + 1:]  # this thorough can be the Building group name
+    # Search BUILDING_GROUP_NAME/ THOROUGHFARE:
+    if (len(thoroughfare_dwel1)==0):
+        thoroughfare_dwel1=dwel2
+    search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]
+    if (search_thorougfare.shape[0] == 0):
+        thoroughfare = dwel2
+        if bool(re.search(r'\b^[0-9]+\b', dwel2)):
+            num_dwel = re.search(r'\b^[0-9]+\b', dwel2).group()
+            last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
+            thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
+        search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
+    search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
+    if search_num.shape[0] == 1:
+        if (search_num.iloc[0]['Status']==""):
+            row = match_process(row, search_num)
+    elif search_num.shape[0] > 1:
+        num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
+        if (num_match.shape[0] == 1):
+            row = match_process(row,num_match)
         else:
-            if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
-                row['Status']='SAME_SA_NO_NUMs'
-                row['SMALL_AREA_REF'] = search_thorougfare.iloc[0]['SMALL_AREA_REF']
+            # Checking if it matches
+            last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
+            if (last_search.shape[0]):
+                row = match_process(row, search_num)
             else:
-                row = search_MPRN(row,D4_geo_num_df)
-    except Exception as ex:
-        print(type(ex))  # the exception instance # arguments stored in .args
-        print(ex)
-        print row
+                if (len(search_num['SMALL_AREA_REF'].unique())==1):
+                    row['Status']='SAME_SA'
+                    row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
+                    row['Geo_Address']=list(search_num.Full_Address)[0]
+                else:
+                    #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
+                    # Search by fuzzy wuzzy
+                    # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
+                    row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1)
+    else:
+        if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
+            row['Status']='SAME_SA_NO_NUMs'
+            row['SMALL_AREA_REF'] = search_thorougfare.iloc[0]['SMALL_AREA_REF']
+            row['Geo_Address'] = list(search_thorougfare.Full_Address)[0]
+        else:
+            df_thoroughfare =pd.DataFrame({'THOROUGHFARE':D4_geo_num_df['THOROUGHFARE'].unique()})
+            row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
+    # except Exception as ex:
+    #     print(type(ex))  # the exception instance # arguments stored in .args
+    #     print(ex)
+    #     print row
     return row
 
-def search_letter_first(row,D4_geo_letters_df):#
+def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
     other_way = False
     try:
         search_num=None
@@ -271,28 +302,29 @@ def search_letter_first(row,D4_geo_letters_df):#
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                             row['Status'] = 'SAME_SA'
                             row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
-
+                            row['Geo_Address'] = list(search_num.Full_Address)[0]
                         else:
                             row = fuzzy_process(search_num, row, dwel1 + " " + dwel2)
             else:
                 if (search_thoroughfare.shape[0] > 0 and len(search_thoroughfare['SMALL_AREA_REF'].unique()) == 1):
                     row['Status'] = 'SAME_SA_NO_NUMs'
                     row['SMALL_AREA_REF'] = search_thoroughfare.iloc[0]['SMALL_AREA_REF']
+                    row['Geo_Address'] = list(search_thoroughfare.Full_Address)[0]
                 else:
                     other_way = True
         else:
             other_way=True
         if (other_way):
-            row = search_MPRN(row, D4_geo_letters_df)
+            row = search_MPRN(row, D4_geo_letters_df,df_thoroughfare)
     except Exception as ex:
         print(type(ex))  # the exception instance # arguments stored in .args
         print(ex)
         print row
 
-    filter = D4_geo_letters_df[D4_geo_letters_df.loc[:,'Full_Address'].str.contains(r'\bCANON\b',regex=True)]
+    #filter = D4_geo_letters_df[D4_geo_letters_df.loc[:,'Full_Address'].str.contains(r'\bCANON\b',regex=True)]
     return row
 
-def search_num_letter(row, D4_geo_num_df):
+def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
     other_way=False
     try:
         mprn_house_no = row['MPRN house no'].strip()
@@ -306,11 +338,12 @@ def search_num_letter(row, D4_geo_num_df):
                 row['Status'] = 'SAME_SA'
                 if (len(search_num['SMALL_AREA_REF'].unique()) == 1 ):
                     row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
+                    row['Geo_Address'] = list(search_num.Full_Address)[0]
                 else:
                     row['SMALL_AREA_REF'] = search_street.iloc[0]['SMALL_AREA_REF']
-                
+                    row['Geo_Address'] = list(search_street.Full_Address)[0]
             elif search_num.shape[0]>0:
-                # row['Status'] = list(search_num.ADDRESS_REFERENCE)
+                row['Geo_Address'] = list(search_num.Full_Address)[0]
                 row['Status'] = 'MANY RESULTS'
             else:
                 num = re.search(r'[0-9]+',mprn_house_no).group()
@@ -322,9 +355,10 @@ def search_num_letter(row, D4_geo_num_df):
                     row['Status'] = 'SAME_SA_not100%'
                     if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                         row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
+                        row['Geo_Address'] = list(search_num.Full_Address)[0]
                     else:
                         row['SMALL_AREA_REF'] = search_street.iloc[0]['SMALL_AREA_REF']
-                    
+                        row['Geo_Address'] = list(search_street.Full_Address)[0]
                 elif search_num.shape[0] > 0:
                     num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
                     if (num_match.shape[0] == 1):
@@ -338,7 +372,7 @@ def search_num_letter(row, D4_geo_num_df):
                             if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                                 row['Status'] = 'SAME_SA'
                                 row['SMALL_AREA_REF'] = search_num.iloc[0]['SMALL_AREA_REF']
-                                
+                                row['Geo_Address'] = list(search_num.Full_Address)[0]
                             else:
                                 row = fuzzy_process(search_num, row, num + " " + street)
                 else:
@@ -346,7 +380,7 @@ def search_num_letter(row, D4_geo_num_df):
         else:
             other_way=True
         if (other_way):
-            row = search_MPRN(row, D4_geo_num_df)
+            row = search_MPRN(row, D4_geo_num_df,df_thoroughfare)
     except Exception as ex:
         print(type(ex))  # the exception instance # arguments stored in .args
         print(ex)
@@ -362,6 +396,7 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
         r'\bAPARTMENT|FLAT|BLOCK\b', na=False, regex=True)]
     D4_geo_num_df = D4_geo_df[
         D4_geo_df.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b[0-9]+\b', regex=True) | D4_geo_df.loc[:,'BUILDING_NUMBER'].str.contains(r'\b[0-9]+\b', regex=True)]
+    df_thoroughfare_geo_num = pd.DataFrame({'THOROUGHFARE': D4_geo_num_df['THOROUGHFARE'].unique()})
 
     # Including APARMENT(S)/FLAT
     D4_dwelling_num_withAPART_df = D4_dwelling_df[(D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(
@@ -370,7 +405,7 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
     D4_dwelling_numm_withNOAPART_df = D4_dwelling_num_withAPART_df.replace(r'\b[APARTMENTS|FLAT|APARTMENT]\b', '', regex=True)
     D4_dwelling_numm_withNOAPART_df['Dwelling AddressLine1'] = D4_dwelling_numm_withNOAPART_df['Dwelling AddressLine1'].apply(lambda x: x.strip())
     D4_geo_num_df_withAPART = D4_geo_df[D4_geo_df.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b[0-9]+\b', regex=True)]
-
+    df_thoroughfare_geo_APART = pd.DataFrame({'THOROUGHFARE': D4_geo_num_df_withAPART['THOROUGHFARE'].unique()})
     # <Digit><Letter>
     D4_dwelling_num_letter_df = D4_dwelling_df[
         (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'\b^[0-9]+[A-Z]+\b', na=False, regex=True))]
@@ -379,7 +414,7 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
     D4_dwelling_letters_only_df = D4_dwelling_df[
         (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'^[A-Z]+\b', na=False, regex=True))]
     D4_geo_letters_df = D4_geo_df
-
+    df_thoroughfare_geo_letter = pd.DataFrame({'THOROUGHFARE': D4_geo_letters_df['THOROUGHFARE'].unique()})
     # <Letter><Digit
     D4_dwelling_letters_digit_df = D4_dwelling_df[
         (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'^[A-Z]+[0-9]+\b', na=False, regex=True))]
@@ -390,13 +425,13 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
 
     tqdm.pandas()
     print '     Dealing with only num or building:'
-    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,), axis=1)
+    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
     print '     Dealing with building:'
-    D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,), axis=1)
+    D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,df_thoroughfare_geo_APART,), axis=1)
     print '     Dealing with group contain <num><letter>'
-    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,), axis=1)
+    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
     print '     Dealing with group starting with letters:'
-    D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,), axis=1)
+    D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,), axis=1)
 
     D4_dwelling_df.update(D4_dwelling_num_only_df)
     D4_dwelling_df.update(D4_dwelling_numm_withNOAPART_df)
