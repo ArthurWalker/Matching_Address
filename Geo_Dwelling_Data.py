@@ -474,25 +474,25 @@ def main():
     dwelling_county= dwelling_df_counties_replace.groupby('MPRN county')
     geo_county =  geo_df.groupby('COUNTY')
 
-    # for i in dublin_cities:
-    #     print i
-    #     # if i =='DUBLIN 4':
-    #     #     break
-    #     #if (i == 'DUBLIN 3'):
-    #     each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
-    #     dwelling_df_counties_replace.update(each_type_dublin)
+    for i in dublin_cities:
+        print i
+        # if i =='DUBLIN 4':
+        #     break
+        #if (i == 'DUBLIN 3'):
+        each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
+        dwelling_df_counties_replace.update(each_type_dublin)
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
     # dwelling_df_counties_replace.to_csv(path_or_buf='Checking_Dublin_3.csv', index=None, header=True)
 
     for j in counties:
         print j
-        if (j == 'WICKLOW'):
-        #    break
-            each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-            dwelling_df_counties_replace.update(each_type_county)
-    each_type_county.to_csv(path_or_buf='Reformat_new14.csv', index=None, header=True)
-    dwelling_df_counties_replace.to_csv(path_or_buf='Wicklow.csv', index=None, header=True)
+        # if (j == 'WICKLOW'):
+        # #    break
+        each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+        dwelling_df_counties_replace.update(each_type_county)
+    #each_type_county.to_csv(path_or_buf='Reformat_new14.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new14.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
