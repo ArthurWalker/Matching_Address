@@ -486,7 +486,7 @@ def main():
         print i
         # if i =='DUBLIN 2':
         #     break
-        if (i == 'DUBLIN 3'):
+        if (i == 'DUBLIN 2'):
             each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         #dwelling_df_counties_replace.update(each_type_dublin)
 
