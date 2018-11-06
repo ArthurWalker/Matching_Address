@@ -97,17 +97,20 @@ def fuzzy_process(search_num,row,dwel):
         max_rows = search_num[search_num['Fuzzy'] == search_num['Fuzzy'].max()]
         if max_rows.shape[0] > 1:
             df = max_rows[max_rows.loc[:,'Full_Address'].str.contains(dwel,regex=True)]
-            if (df.shape[0]==1 and df['Fuzzy']>65):
+            if (df.shape[0]==1 and df['Fuzzy']>=70):
                 row = match(row,df,'MATCH_Fuzzy')
                 row['Percent_Match']=df['Fuzzy'].max()
             else:
+                row['Percent_Match']=max_rows['Fuzzy'].max()
                 row=match(row,search_num,'MANY RESULTS')
         elif max_rows.shape[0]==1:
             if (max_rows['Fuzzy'].unique()>=65):
                 row = match(row, max_rows,'MATCH_Fuzzy')
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
+            else:
+                row = match(row, max_rows,'Last_Fuzzy_Check')
     else:
-        row = match(row, search_num, 'MANY RESULTS')
+        row['Status']='CANT FIND'
     return row
 
 def search_MPRN(row,geo_df,df_thoroughfare):
@@ -140,14 +143,19 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
             row = match(row, search_apart, 'SAME_SA')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
-            row = fuzzy_process(search_apart, row, row['MPRN Address'])
+            address = row['MPRN unit no']+" "+row['MPRN house no']+" "+row['MPRN street']+" "+row['MPRN address1']+" "+row['MPRN address2']+" "+row['MPRN address4']
+            address = re.sub(r'\s{2,}','',address)
+            row = fuzzy_process(search_apart, row, address)
     if search_num is not None:
         if (search_num.shape[0]==1):
             row = match(row, search_num,'MATCH')
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
             row = match(row, search_num, 'SAME_SA')
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
-            row = fuzzy_process(search_num, row, row['MPRN Address'])
+            address = row['MPRN unit no'] + " " + row['MPRN house no'] + " " + row['MPRN street'] + " " + row[
+                'MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
+            address = re.sub(r'\s{2,}', '', address)
+            row = fuzzy_process(search_num, row, address)
         else:
             cant_find=True
     else:
@@ -321,8 +329,8 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
                     row = match(row, search_num, 'SAME_SA')
                 else:
                     row = match(row, search_street, 'SAME_SA')
-            elif search_num.shape[0]>0:
-                row = match(row, search_num, 'MANY RESULTS')
+            elif search_num.shape[0]>1:
+                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + 'MPRN street')
             else:
                 num = re.search(r'[0-9]+',mprn_house_no).group()
                 search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(num),regex=True)]
@@ -417,10 +425,10 @@ def main():
     print "Initializing data"
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/File 6-11/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling_df = pd.read_csv(path+'Reformat2.csv',skipinitialspace=True,low_memory=False).fillna('')
-    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -476,23 +484,23 @@ def main():
 
     for i in dublin_cities:
         print i
-        # if i =='DUBLIN 4':
-        #     break
+        if i =='DUBLIN 2':
+            break
         #if (i == 'DUBLIN 3'):
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
-        dwelling_df_counties_replace.update(each_type_dublin)
+        #dwelling_df_counties_replace.update(each_type_dublin)
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
-    # dwelling_df_counties_replace.to_csv(path_or_buf='Checking_Dublin_3.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Many_Dublin_1.csv', index=None, header=True)
 
-    for j in counties:
-        print j
-        # if (j == 'WICKLOW'):
-        # #    break
-        each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-        dwelling_df_counties_replace.update(each_type_county)
+    # for j in counties:
+    #     print j
+    #     # if (j == 'WICKLOW'):
+    #     # #    break
+    #     each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #     dwelling_df_counties_replace.update(each_type_county)
     #each_type_county.to_csv(path_or_buf='Reformat_new14.csv', index=None, header=True)
-    dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new14.csv', index=None, header=True)
+    #dwelling_df_counties_replace.to_csv(path_or_buf='Many_ResultD1.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
