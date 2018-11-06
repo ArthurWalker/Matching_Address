@@ -484,14 +484,14 @@ def main():
 
     for i in dublin_cities:
         print i
-        if i =='DUBLIN 2':
-            break
-        #if (i == 'DUBLIN 3'):
-        each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
+        # if i =='DUBLIN 2':
+        #     break
+        if (i == 'DUBLIN 3'):
+            each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         #dwelling_df_counties_replace.update(each_type_dublin)
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
-    each_type_dublin.to_csv(path_or_buf='Many_Dublin_1.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Many_Dublin_3.csv', index=None, header=True)
 
     # for j in counties:
     #     print j
