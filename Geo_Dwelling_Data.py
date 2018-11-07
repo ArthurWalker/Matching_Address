@@ -58,7 +58,8 @@ def fix_misspell(df):
         r'\bWINTER GARDENS\b':'WINTER GARDEN',
         r'\bKILLARNEY COURT\b':'KILLARNEY AVENUE',
         r'\bGRANVILLE\b':'GRENVILLE',
-        r'\bKINGS INNS\b':'KING\'S INNS'
+        r'\bKINGS INNS\b':'KING\'S INNS',
+        r'\bBAILE ATHA CLIATH\b':'DUBLIN'
     }
     df = df.replace(misspell,inplace=False, regex=True)
     return df
@@ -429,7 +430,9 @@ def main():
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/
     path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
 
+
     dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
+
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
@@ -437,7 +440,7 @@ def main():
     dwelling_df['Dwelling AddressLine1'] = dwelling_df['Dwelling AddressLine1'].apply(lambda x: x.strip())
     dwelling_df = fix_misspell(dwelling_df)
 
-    counties = ['CARLOW', 'CAVAN', 'CLARE', 'CORK', 'DONEGAL',
+    counties = ['CARLOW', 'CAVAN', 'CLARE', 'CORK', 'DONEGAL','DUBLIN',
                 'GALWAY', 'KERRY', 'KILDARE', 'KILKENNY', 'LAOIS', 'LEITRIM', 'LIMERICK', 'LONGFORD',
                 'LOUTH', 'MAYO', 'MEATH', 'MONAGHAN', 'OFFALY', 'ROSCOMMON', 'SLIGO', 'TIPPERARY',
                 'WATERFORD', 'WESTMEATH', 'WEXFORD', 'WICKLOW']
@@ -488,21 +491,32 @@ def main():
         print i
         # if i =='DUBLIN 2':
         #     break
-        # if (i == 'DUBLIN 2'):
+
+        # if (i == 'DUBLIN 3'):
+
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
         dwelling_df_counties_replace.update(each_type_dublin)
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
-    #each_type_dublin.to_csv(path_or_buf='Checking_D1.csv', index=None, header=True)
+
+    #each_type_dublin.to_csv(path_or_buf='Many_Dublin_3.csv', index=None, header=True)
 
     for j in counties:
         print j
         # if (j == 'WICKLOW'):
         # #    break
-        each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+
+        if (j=='DUBLIN'):
+            geo_outside_DUBLIN = geo_county[geo_county['COUNTY'] == 'DUBLIN']
+            dwelling_DUBLIN =dwelling_county.get_group(j)
+            dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
+            each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+        else:
+            each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
         dwelling_df_counties_replace.update(each_type_county)
-    #each_type_county.to_csv(path_or_buf='Reformat_new14.csv', index=None, header=True)
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results.csv', index=None, header=True)
+    #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new15.csv', index=None, header=True)
+
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':

@@ -7,7 +7,14 @@ def main():
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
     #dwelling = pd.read_csv(path+'.csv', skipinitialspace=True, low_memory=False).fillna('')
-    dwelling = pd.read_csv(path+'Reformat2.csv', skipinitialspace=True, low_memory=False).fillna('')
+
+    dwelling = pd.read_csv(path+'Outside_Dublin.csv', skipinitialspace=True, low_memory=False).fillna('')
+
+    dublin_cities = ['DUBLIN 1', 'DUBLIN 2', 'DUBLIN 3', 'DUBLIN 4', 'DUBLIN 5', 'DUBLIN 6', 'DUBLIN 7', 'DUBLIN 8',
+                     'DUBLIN 9', 'DUBLIN 10', 'DUBLIN 11', 'DUBLIN 12', 'DUBLIN 13', 'DUBLIN 14', 'DUBLIN 15',
+                     'DUBLIN 16', 'DUBLIN 17', 'DUBLIN 18', 'DUBLIN 20', 'DUBLIN 22','DUBLIN 24',
+                     'DUBLIN 6W']
+
     #dwelling.shape[0]
     # list_county = ['DUBLIN ']*13
     # for i in range(len(list_county)):
@@ -46,12 +53,16 @@ def main():
     #sample_df = dwelling_df.sample(n=4000)
     #sample_df = sample_df.apply(pick_rand)
 
-    dwelling_df = dwelling[dwelling.loc[:,'MPRN house no']=='']
-    dwelling_df = dwelling_df[dwelling_df.loc[:,'MPRN unit no']=='']
+
+    # dwelling_df = dwelling[dwelling.loc[:,'MPRN house no']==pick_rand'']
+    # dwelling_df = dwelling_df[dwelling_df.loc[:,'MPRN unit no']=='']
+
+    #dwelling_df = dwelling[dwelling['COUNTY']=='DUBLIN']
     #dwelling.shape[0]
     #dwelling_df.shape[0]
+    sample_df = dwelling.sample(n=4000)
+    sample_df.to_csv(path_or_buf='Outside_Dublin_4000.csv', index=None, header=True)
 
-    dwelling_df.to_csv(path_or_buf='EMPTY_MPRN_NO.csv', index=None, header=True)
     print 'Hi'
 
 
