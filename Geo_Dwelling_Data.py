@@ -333,7 +333,7 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
                 else:
                     row = match(row, search_street, 'SAME_SA')
             elif search_num.shape[0]>1:
-                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + 'MPRN street')
+                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'])
             else:
                 num = re.search(r'[0-9]+',mprn_house_no).group()
                 search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(num),regex=True)]
@@ -428,7 +428,7 @@ def main():
     print "Initializing data"
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/
-    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
 
     dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
