@@ -147,7 +147,7 @@ def search_MPRN(row,geo_df,df_thoroughfare):
             if (len(search_apart['EIRCODE'].unique())==1 and len(search_apart['LONGITUTE'].unique())==1 and len(search_apart['LATITUTE'].unique())==1):
                 row = match(row, search_apart, 'SAME_SA_UNIQUE')
             else:
-                row = match(row, search_apart, 'SAME_SA')
+                row = match(row, search_apart, 'SAME_SA_NOT_UNIQUE')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
             address = row['MPRN unit no']+" "+row['MPRN house no']+" "+row['MPRN street']+" "+row['MPRN address1']+" "+row['MPRN address2']+" "+row['MPRN address4']
             address = re.sub(r'\s{2,}','',address)
@@ -163,6 +163,7 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
             address = row['MPRN unit no'] + " " + row['MPRN house no'] + " " + row['MPRN street'] + " " + row[
                 'MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
+            address= address.strip()
             address = re.sub(r'\s{2,}', '', address)
             row = fuzzy_process(search_num, row, address)
         else:
@@ -241,7 +242,7 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
                                 search_num['LONGITUTE'].unique()) == 1 and len(search_num['LATITUTE'].unique()) == 1):
                             row = match(row, search_num, 'SAME_SA_UNIQUE')
                         else:
-                            row = match(row, search_num, 'SAME_SA')
+                            row = match(row, search_num, 'SAME_SA_NOT_UNIQUE')
                     else:
                         #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
                         # Search by fuzzy wuzzy
@@ -356,13 +357,13 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
                             search_num['LATITUTE'].unique()) == 1):
                         row = match(row, search_num, 'SAME_SA_UNIQUE')
                     else:
-                        row = match(row, search_num, 'SAME_SA')
+                        row = match(row, search_num, 'SAME_SA_NOT_UNIQUE')
                 else:
                     if (len(search_street['EIRCODE'].unique()) == 1 and len(search_street['LONGITUTE'].unique()) == 1 and len(
                             search_street['LATITUTE'].unique()) == 1):
                         row = match(row, search_street, 'SAME_SA_UNIQUE')
                     else:
-                        row = match(row, search_street, 'SAME_SA')
+                        row = match(row, search_street, 'SAME_SA_NOT_UNIQUE')
             elif search_num.shape[0]>1:
                 row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'])
             else:
@@ -464,7 +465,7 @@ def main():
     print "Initializing data"
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
+    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
 
 
     dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
@@ -551,7 +552,7 @@ def main():
             each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
         dwelling_df_counties_replace.update(each_type_county)
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
-    dwelling_df_counties_replace.to_csv(path_or_buf='Reformat_new15.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_Empty_Field.csv', index=None, header=True)
 
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
