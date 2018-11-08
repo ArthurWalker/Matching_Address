@@ -144,7 +144,10 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         if (search_apart.shape[0]==1):
             row = match(row, search_apart,'MATCH')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
-            row = match(row, search_apart, 'SAME_SA')
+            if (len(search_apart['EIRCODE'].unique())==1 and len(search_apart['LONGITUTE'].unique())==1 and len(search_apart['LATITUTE'].unique())==1):
+                row = match(row, search_apart, 'SAME_SA_UNIQUE')
+            else:
+                row = match(row, search_apart, 'SAME_SA')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
             address = row['MPRN unit no']+" "+row['MPRN house no']+" "+row['MPRN street']+" "+row['MPRN address1']+" "+row['MPRN address2']+" "+row['MPRN address4']
             address = re.sub(r'\s{2,}','',address)
@@ -153,7 +156,10 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         if (search_num.shape[0]==1):
             row = match(row, search_num,'MATCH')
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
-            row = match(row, search_num, 'SAME_SA')
+            if (len(search_num['EIRCODE'].unique())==1 and len(search_num['LONGITUTE'].unique())==1 and len(search_num['LATITUTE'].unique())==1):
+                row = match(row, search_num, 'SAME_SA_UNIQUE')
+            else:
+                row = match(row, search_num, 'SAME_SA_NOT_UNIQUE')
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
             address = row['MPRN unit no'] + " " + row['MPRN house no'] + " " + row['MPRN street'] + " " + row[
                 'MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
@@ -231,7 +237,11 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
                     row = match(row, search_num,'MATCH')
                 else:
                     if (len(search_num['SMALL_AREA_REF'].unique())==1):
-                        row = match(row, search_num, 'SAME_SA')
+                        if (len(search_num['EIRCODE'].unique()) == 1 and len(
+                                search_num['LONGITUTE'].unique()) == 1 and len(search_num['LATITUTE'].unique()) == 1):
+                            row = match(row, search_num, 'SAME_SA_UNIQUE')
+                        else:
+                            row = match(row, search_num, 'SAME_SA')
                     else:
                         #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
                         # Search by fuzzy wuzzy
@@ -239,7 +249,11 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
                         row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1)
         else:
             if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
-                row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs')
+                if (len(search_thorougfare['EIRCODE'].unique()) == 1 and len(search_thorougfare['LONGITUTE'].unique()) == 1 and len(
+                        search_thorougfare['LATITUTE'].unique()) == 1):
+                    row = match(row, search_thorougfare, 'SAME_SA_NO_NUMS_UNIQUE')
+                else:
+                    row = match(row, search_thorougfare, 'SAME_SA_NO_NUMS_NOT_UNIQUE')
             else:
                 row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
     except Exception as ex:
@@ -297,12 +311,21 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
                         row = match(row, search_num,'MATCH')
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                            row = match(row, search_num, 'SAME_SA')
+                            if (len(search_num['EIRCODE'].unique()) == 1 and len(
+                                    search_num['LONGITUTE'].unique()) == 1 and len(
+                                    search_num['LATITUTE'].unique()) == 1):
+                                row = match(row, search_num, 'SAME_SA_UNIQUE')
+                            else:
+                                row = match(row, search_num, 'SAME_SA_NOT_UNIQUE')
                         else:
                             row = fuzzy_process(search_num, row, dwel1 + " " + dwel2)
             else:
                 if (search_thoroughfare.shape[0] > 0 and len(search_thoroughfare['SMALL_AREA_REF'].unique()) == 1):
-                    row = match(row, search_thoroughfare, 'SAME_SA_NO_NUMs')
+                    if (len(search_num['EIRCODE'].unique()) == 1 and len(search_num['LONGITUTE'].unique()) == 1 and len(
+                            search_num['LATITUTE'].unique()) == 1):
+                        row = match(row, search_num, 'SAME_SA_NO_NUMS_UNIQUE')
+                    else:
+                        row = match(row, search_thoroughfare, 'SAME_SA_NO_NUM_NOT_UNIQUE')
                 else:
                     other_way = True
         else:
@@ -329,9 +352,17 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
                 row=match(row,search_num,'MATCH')
             elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
                 if (len(search_num['SMALL_AREA_REF'].unique()) == 1 ):
-                    row = match(row, search_num, 'SAME_SA')
+                    if (len(search_num['EIRCODE'].unique()) == 1 and len(search_num['LONGITUTE'].unique()) == 1 and len(
+                            search_num['LATITUTE'].unique()) == 1):
+                        row = match(row, search_num, 'SAME_SA_UNIQUE')
+                    else:
+                        row = match(row, search_num, 'SAME_SA')
                 else:
-                    row = match(row, search_street, 'SAME_SA')
+                    if (len(search_street['EIRCODE'].unique()) == 1 and len(search_street['LONGITUTE'].unique()) == 1 and len(
+                            search_street['LATITUTE'].unique()) == 1):
+                        row = match(row, search_street, 'SAME_SA_UNIQUE')
+                    else:
+                        row = match(row, search_street, 'SAME_SA')
             elif search_num.shape[0]>1:
                 row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'])
             else:
@@ -355,7 +386,12 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
                             row = match(row, last_search,'MATCH')
                         else:
                             if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                                row = match(row, search_num, 'SAME_SA')
+                                if (len(search_num['EIRCODE'].unique()) == 1 and len(
+                                        search_num['LONGITUTE'].unique()) == 1 and len(
+                                    search_num['LATITUTE'].unique()) == 1):
+                                    row = match(row, search_num, 'SAME_SA_UNIQUE')
+                                else:
+                                    row = match(row, search_num, 'SAME_SA_NOT_UNIQUE')
                             else:
                                 row = fuzzy_process(search_num, row, num + " " + street)
                 else:
@@ -507,7 +543,7 @@ def main():
         # #    break
 
         if (j=='DUBLIN'):
-            geo_outside_DUBLIN = geo_county[geo_county['COUNTY'] == 'DUBLIN']
+            geo_outside_DUBLIN = geo_county.get_group(j)
             dwelling_DUBLIN =dwelling_county.get_group(j)
             dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
             each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
