@@ -428,13 +428,13 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
 
     tqdm.pandas()
     print '     Dealing with only num or building:'
-    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,dict,), axis=1)
     print '     Dealing with building:'
-    D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,df_thoroughfare_geo_APART,), axis=1)
+    D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,df_thoroughfare_geo_APART,dict,), axis=1)
     print '     Dealing with group contain <num><letter>'
-    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,dict,), axis=1)
     print '     Dealing with group starting with letters:'
-    D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,), axis=1)
+    D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,dict,), axis=1)
 
     D4_dwelling_df.update(D4_dwelling_num_only_df)
     D4_dwelling_df.update(D4_dwelling_numm_withNOAPART_df)
