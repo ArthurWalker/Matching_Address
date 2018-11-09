@@ -45,7 +45,7 @@ def search_for_misspell(row,df_thoroughfare,col):
     df_thoroughfare['Fuzzy']=""
     term = row[col].strip()
     df_thoroughfare['Fuzzy']=df_thoroughfare['THOROUGHFARE'].apply(search_fuzzy_token, args=(term,))
-    if (df_thoroughfare['Fuzzy'].max()>95):
+    if (df_thoroughfare['Fuzzy'].max()>=95):
         street = df_thoroughfare[df_thoroughfare['Fuzzy']==df_thoroughfare['Fuzzy'].max()]
         row[col]=street.iloc[0]['THOROUGHFARE']
     return row
@@ -111,7 +111,7 @@ def search_fuzzy_token(row,address):
 def search_fuzzy(row,address_to_cp):
     return fuzz.partial_ratio(row,address_to_cp)
 
-def fuzzy_process(search_num,row,dwel,dict):
+def fuzzy_process(search_num,row,dwel,dict,status):
     search_num['Fuzzy'] = search_num['Full_Address'].apply(search_fuzzy, args=(dwel,))
     if (search_num['Fuzzy'].shape[0] > 0):
         max_rows = search_num[search_num['Fuzzy'] == search_num['Fuzzy'].max()]
@@ -120,16 +120,26 @@ def fuzzy_process(search_num,row,dwel,dict):
             if (df.shape[0]==1 and df['Fuzzy']>=70):
                 row = match(row,df,'MATCH_Fuzzy',dict)
                 row['Percent_Match']=df['Fuzzy'].max()
+            elif (df.shape[0]==1 and df['Fuzzy']<70):
+                row = match(row, max_rows, 'Worst Fuzzy Case', dict)
             else:
                 row['Percent_Match']=max_rows['Fuzzy'].max()
-                row=match(row,max_rows,'MANY RESULTS',dict)
+                if (status == 'SAME_SA'):
+                    row = match(row, max_rows, 'SAME SA', dict)
+                else:
+                    row=match(row,max_rows,'MANY RESULTS',dict)
         elif max_rows.shape[0]==1:
-            if (max_rows['Fuzzy'].unique()>=65):
+            if (max_rows['Fuzzy'].unique()>=67):
                 row = match(row, max_rows,'MATCH_Fuzzy',dict)
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
             else:
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
-                row = match(row, max_rows,'Worst_Fuzzy_Case',dict)
+                if (status == 'SAME_SA'):
+                    row = match(row, max_rows, 'SAME SA Worst Fuzzy Case', dict)
+                else:
+                    row = match(row, max_rows,'Worst Fuzzy Case',dict)
+        else:
+            row['Status']='CANT FIND'
     else:
         row['Status']='CANT FIND'
     return row
@@ -143,6 +153,10 @@ def search_MPRN(row,geo_df,df_thoroughfare,dict):
     search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street']),regex=True)]
     search_num = None
     search_apart = None
+    address = row['MPRN unit no'] + " " + row['MPRN house no'] + " " + row['MPRN street'] + " " + row[
+        'MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
+    address = address.strip()
+    address = re.sub(r'\s{2,}', '', address)
     #row = change_position_UPPER_LOWER(row)
     if (search_thoroughfare.shape[0]>0):
         search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
@@ -162,22 +176,17 @@ def search_MPRN(row,geo_df,df_thoroughfare,dict):
         if (search_apart.shape[0]==1):
             row = match(row, search_apart,'MATCH',dict)
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
-            row = match(row, search_apart, 'SAME_SA',dict)
+            row = fuzzy_process(search_apart, row,address, dict,'SAME_SA')
+            #row = match(row, search_apart, 'SAME_SA',dict)
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
-            address = row['MPRN unit no']+" "+row['MPRN house no']+" "+row['MPRN street']+" "+row['MPRN address1']+" "+row['MPRN address2']+" "+row['MPRN address4']
-            address = re.sub(r'\s{2,}','',address)
-            row = fuzzy_process(search_apart, row, address,dict)
+            row = fuzzy_process(search_apart, row, address,dict,None)
     if search_num is not None:
         if (search_num.shape[0]==1):
             row = match(row, search_num,'MATCH',dict)
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
-            row = match(row, search_num, 'SAME_SA',dict)
+            row = fuzzy_process(search_num, row, address, dict, 'SAME_SA')
         elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
-            address = row['MPRN unit no'] + " " + row['MPRN house no'] + " " + row['MPRN street'] + " " + row[
-                'MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
-            address = address.strip()
-            address = re.sub(r'\s{2,}', '', address)
-            row = fuzzy_process(search_num, row, address,dict)
+            row = fuzzy_process(search_num, row, address,dict,None)
         else:
             cant_find=True
     else:
@@ -210,61 +219,64 @@ def search_MPRN(row,geo_df,df_thoroughfare,dict):
 #     return row
 
 def search_num_first(row,D4_geo_num_df,df_thoroughfare,dict):
-    # try:
-    dwel1 = (row['Dwelling AddressLine1'].strip())
-    dwel2 = (row['Dwelling AddressLine2'].strip())
-    dwel3 = (row['Dwelling AddressLine3'].strip())
-    # num part
-    if (re.search(r'\b^[0-9]+\b', dwel1)):
-        num = re.search(r'\b^[0-9]+\b', dwel1).group()
-        last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
-    elif (re.search(r'\b^[0-9]+[A-Z]+\b',dwel1)):
-        dit_let =re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).group()
-        last_digt = re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).end()
-        num = re.search(r'\b^[0-9]+', dit_let).group()
-    # later part: it can be digit+letters or letter. But 0 assume that they are letters
-    thoroughfare_dwel1 = dwel1[last_digit + 1:]  # this thorough can be the Building group name
-    # Search BUILDING_GROUP_NAME/ THOROUGHFARE:
-    if (len(thoroughfare_dwel1)==0):
-        thoroughfare_dwel1=dwel2
-    search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]
-    if (search_thorougfare.shape[0] == 0):
-        thoroughfare = dwel2
-        if bool(re.search(r'\b^[0-9]+\b', dwel2)):
-            num_dwel = re.search(r'\b^[0-9]+\b', dwel2).group()
-            last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
-            thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
-        search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
-    search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
-    if search_num.shape[0] == 1:
-        if (search_num.iloc[0]['Status']==""):
-            row = match(row, search_num,'MATCH',dict)
-    elif search_num.shape[0] > 1:
-        num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
-        if (num_match.shape[0] == 1):
-            row = match(row,num_match,'MATCH',dict)
-        else:
-            # Checking if it matches
-            last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
-            if (last_search.shape[0]==1):
+    try:
+        dwel1 = (row['Dwelling AddressLine1'].strip())
+        dwel2 = (row['Dwelling AddressLine2'].strip())
+        dwel3 = (row['Dwelling AddressLine3'].strip())
+        address = dwel1 + " " +dwel2 + " " +dwel3
+        address = address.strip()
+        address = re.sub(r'\s{2,}', '', address)
+        # num part
+        if (re.search(r'\b^[0-9]+\b', dwel1)):
+            num = re.search(r'\b^[0-9]+\b', dwel1).group()
+            last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
+        elif (re.search(r'\b^[0-9]+[A-Z]+\b',dwel1)):
+            dit_let =re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).group()
+            last_digt = re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).end()
+            num = re.search(r'\b^[0-9]+', dit_let).group()
+        # later part: it can be digit+letters or letter. But 0 assume that they are letters
+        thoroughfare_dwel1 = dwel1[last_digit + 1:]  # this thorough can be the Building group name
+        # Search BUILDING_GROUP_NAME/ THOROUGHFARE:
+        if (len(thoroughfare_dwel1)==0):
+            thoroughfare_dwel1=dwel2
+        search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]
+        if (search_thorougfare.shape[0] == 0):
+            thoroughfare = dwel2
+            if bool(re.search(r'\b^[0-9]+\b', dwel2)):
+                num_dwel = re.search(r'\b^[0-9]+\b', dwel2).group()
+                last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
+                thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
+            search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
+        search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
+        if search_num.shape[0] == 1:
+            if (search_num.iloc[0]['Status']==""):
                 row = match(row, search_num,'MATCH',dict)
+        elif search_num.shape[0] > 1:
+            num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
+            if (num_match.shape[0] == 1):
+                row = match(row,num_match,'MATCH',dict)
             else:
-                if (len(search_num['SMALL_AREA_REF'].unique())==1):
-                    row = match(row, search_num, 'SAME_SA',dict)
+                # Checking if it matches
+                last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
+                if (last_search.shape[0]==1):
+                    row = match(row, search_num,'MATCH',dict)
                 else:
-                    #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
-                    # Search by fuzzy wuzzy
-                    # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
-                    row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,dict)
-    else:
-        if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
-            row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs',dict)
+                    if (len(search_num['SMALL_AREA_REF'].unique())==1):
+                        row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,dict,'SAME_SA')
+                    else:
+                        #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
+                        # Search by fuzzy wuzzy
+                        # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
+                        row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,dict,None)
         else:
-            row = search_MPRN(row,D4_geo_num_df,df_thoroughfare,dict)
-    # except Exception as ex:
-    #     print(type(ex))  # the exception instance # arguments stored in .args
-    #     print(ex)
-    #     print row
+            if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
+                row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs',dict)
+            else:
+                row = search_MPRN(row,D4_geo_num_df,df_thoroughfare,dict)
+    except Exception as ex:
+        print(type(ex))  # the exception instance # arguments stored in .args
+        print(ex)
+        print row
     return row
 
 def search_letter_first(row,D4_geo_letters_df,df_thoroughfare,dict):#
@@ -316,12 +328,13 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare,dict):#
                         row = match(row, search_num,'MATCH',dict)
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                            row = match(row, search_num, 'SAME_SA',dict)
+                            row = fuzzy_process(search_num, row, dwel1 + " " + dwel2,dict,'SAME_SA')
                         else:
-                            row = fuzzy_process(search_num, row, dwel1 + " " + dwel2,dict)
+                            row = fuzzy_process(search_num, row, dwel1 + " " + dwel2,dict,None)
             else:
                 if (search_thoroughfare.shape[0] > 0 and len(search_thoroughfare['SMALL_AREA_REF'].unique()) == 1):
-                    row = match(row, search_thoroughfare, 'SAME_SA_NO_NUMs',dict)
+                    row = fuzzy_process(search_thoroughfare, row, dwel1 + " " + dwel2, dict, 'SAME_SA')
+                    #row = match(row, search_thoroughfare, 'SAME_SA_NO_NUMs',dict)
                 else:
                     other_way = True
         else:
@@ -348,11 +361,11 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare,dict):
                 row=match(row,search_num,'MATCH',dict)
             elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
                 if (len(search_num['SMALL_AREA_REF'].unique()) == 1 ):
-                    row = match(row, search_num, 'SAME_SA',dict)
+                    row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'], dict, 'SAME_SA')
                 else:
-                    row = match(row, search_street, 'SAME_SA',dict)
+                    row = fuzzy_process(search_street, row, row['MPRN house no'] + " " + row['MPRN street'], dict, 'SAME_SA')
             elif search_num.shape[0]>1:
-                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'],dict)
+                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'],dict,None)
             else:
                 num = re.search(r'[0-9]+',mprn_house_no).group()
                 search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(num),regex=True)]
@@ -370,13 +383,13 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare,dict):
                     else:
                         # Checking if it matches
                         last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(num, street))]
-                        if (last_search.shape[0]):
+                        if (last_search.shape[0]==1):
                             row = match(row, last_search,'MATCH',dict)
                         else:
                             if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                                row = match(row, search_num, 'SAME_SA,dict')
+                                row = fuzzy_process(search_num, row, num + " " + street,dict,'SAME_SA')
                             else:
-                                row = fuzzy_process(search_num, row, num + " " + street,dict)
+                                row = fuzzy_process(search_num, row, num + " " + street,dict,None)
                 else:
                     other_way=True
         else:
@@ -448,12 +461,12 @@ def main():
     print "Initializing data"
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
-    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
 
 
-    dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Dwelling_D1.csv',skipinitialspace=True,low_memory=False).fillna('')
 
-    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -509,8 +522,8 @@ def main():
 
     for i in dublin_cities:
         print i
-        # if i =='DUBLIN 2':
-        #     break
+        if i =='DUBLIN 2':
+            break
 
         # if (i == 'DUBLIN 3'):
 
@@ -519,24 +532,25 @@ def main():
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
 
-    #each_type_dublin.to_csv(path_or_buf='Dwelling_D1.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='Dwelling_D1.csv', index=None, header=True)
 
-    for j in counties:
-        print j
-        # if (j == 'WICKLOW'):
-        # #    break
-
-        if (j=='DUBLIN'):
-            geo_outside_DUBLIN = geo_county.get_group(j)
-            dwelling_DUBLIN =dwelling_county.get_group(j)
-            dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
-            each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
-        else:
-            each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-        dwelling_df_counties_replace.update(each_type_county)
+    # for j in counties:
+    #     print j
+    #     # if (j == 'WICKLOW'):
+    #     # #    break
+    #
+    #     if (j=='DUBLIN'):
+    #         geo_outside_DUBLIN = geo_county.get_group(j)
+    #         dwelling_DUBLIN =dwelling_county.get_group(j)
+    #         dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
+    #         each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+    #     else:
+    #         each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #     dwelling_df_counties_replace.update(each_type_county)
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_Blank_Fields.csv', index=None, header=True)
-
+    #dwelling_df_counties_replace.to_csv(path_or_buf='Results_Blank_Fields.csv', index=None, header=True)
+    df_of_address_reference = pd.DataFrame.from_dict(dict,orient='index')
+    df_of_address_reference.to_csv(path_or_buf='List_of_ADDRESS_REFERENCE', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
