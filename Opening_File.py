@@ -8,7 +8,7 @@ def main():
 
     #dwelling = pd.read_csv(path+'.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    dwelling = pd.read_csv(path+'Dwelling_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv(path+'Results_Blank_Fields.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     dublin_cities = ['DUBLIN 1', 'DUBLIN 2', 'DUBLIN 3', 'DUBLIN 4', 'DUBLIN 5', 'DUBLIN 6', 'DUBLIN 7', 'DUBLIN 8',
                      'DUBLIN 9', 'DUBLIN 10', 'DUBLIN 11', 'DUBLIN 12', 'DUBLIN 13', 'DUBLIN 14', 'DUBLIN 15',
@@ -45,11 +45,11 @@ def main():
     # perc_perf_matche = float(total_match)/(total)*100
     # perc_almost_matche = float(total_result_almost_match)/(total)*100
 
-    #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|CANT FIND|MANY RESULTS|SAME_SA_NO_NUMs',regex=True)]
-    #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
+    #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS|SAME_SA_NO_NUMs|Worst_Fuzzy_Case',regex=True)]
+    #dwelling_df = dwelling_df[dwelling_df.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
     #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS', regex=True)]
     #dwelling_df = dwelling[dwelling['MPRN city'].isin(['DUBLIN 1'])]
-    #dwelling_df = dwelling[dwelling['MPRN city']== 'DUBLIN 1']
+    dwelling_df = dwelling[dwelling['MPRN county']== '']
     #sample_df = dwelling_df.sample(n=4000)
     #sample_df = sample_df.apply(pick_rand)
 
@@ -60,8 +60,8 @@ def main():
     #dwelling_df = dwelling[dwelling['COUNTY']=='DUBLIN']
     #dwelling.shape[0]
     #dwelling_df.shape[0]
-    sample_df = dwelling.sample(n=4000)
-    sample_df.to_csv(path_or_buf='Dwelling_D1_4000.csv', index=None, header=True)
+    #sample_df = dwelling.sample(n=4000)
+    dwelling_df.to_csv(path_or_buf='EMPTY_MPRN_COUNTY.csv', index=None, header=True)
 
     print 'Hi'
 
