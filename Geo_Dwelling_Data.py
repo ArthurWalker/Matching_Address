@@ -453,11 +453,11 @@ def main():
     print "Initializing data"
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
-    dwelling_df = pd.read_csv(path+'Dwelling_D1_4000.csv',skipinitialspace=True,low_memory=False).fillna('')
+    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
     #dwelling_df = pd.read_csv('Cant_Find_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -518,34 +518,31 @@ def main():
     dict={}
     for i in dublin_cities:
         print i
-        if i =='DUBLIN 2':
-            break
-
+        # if i =='DUBLIN 2':
+        #     break
         # if (i == 'DUBLIN 3'):
-
         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i),dict)
         dwelling_df_counties_replace.update(each_type_dublin)
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
 
 
-    each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
+    #each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
 
-    # for j in counties:
-    #     print j
-    #     # if (j == 'WICKLOW'):
-    #     # #    break
-    #
-    #     if (j=='DUBLIN'):
-    #         geo_outside_DUBLIN = geo_county.get_group(j)
-    #         dwelling_DUBLIN =dwelling_county.get_group(j)
-    #         dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
-    #         each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN,dict)
-    #     else:
-    #         each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j),dict)
-    #     dwelling_df_counties_replace.update(each_type_county)
-    #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
-    #dwelling_df_counties_replace.to_csv(path_or_buf='Results_Blank_Fields.csv', index=None, header=True)
+    for j in counties:
+        print j
+        # if (j == 'WICKLOW'):
+        # #    break
+        if (j=='DUBLIN'):
+            geo_outside_DUBLIN = geo_county.get_group(j)
+            dwelling_DUBLIN =dwelling_county.get_group(j)
+            dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
+            each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN,dict)
+        else:
+            each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j),dict)
+        dwelling_df_counties_replace.update(each_type_county)
+    each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_Blank_Fields.csv', index=None, header=True)
     df_of_address_reference = pd.DataFrame.from_dict(dict,orient='index')
     df_of_address_reference.to_csv(path_or_buf='List_of_ADDRESS_REFERENCE.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
