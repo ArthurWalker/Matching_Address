@@ -65,32 +65,24 @@ def fix_misspell(df):
     return df
 
 def match(row,df,status,dict):
-    if (df.shape[0]==1):
-        row['Status'] = status
-        row['Geo_Address'] = df.iloc[0]['Full_Address']
-        row['ADDRESS_REFERENCE'] = df.iloc[0]['ADDRESS_REFERENCE']
-        row['BUILDING_ID'] = df.iloc[0]['BUILDING_ID']
-        row['EIRCODE'] = df.iloc[0]['EIRCODE']
-        row['SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
-        row['LATITUDE'] = df.iloc[0]['LATITUDE']
-        row['LONGITUDE'] = df.iloc[0]['LONGITUDE']
-        dict[row['DwellingData_id']]=list(df.ADDRESS_REFERENCE)
-    else:
-        # df >1
-        row['Status'] = status
-        if len(df['SMALL_AREA_REF'].unique())==1:
-            row['SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
-            row['Pham_EIRCODE'] = df.iloc[0]['EIRCODE']
-            row['ADDRESS_REFERENCE'] = df.iloc[0]['ADDRESS_REFERENCE']
-            row['BUILDING_ID'] = df.iloc[0]['BUILDING_ID']
-            row['Geo_Address'] = df.iloc[0]['Full_Address']
-            dict[row['DwellingData_id']]=list(df.ADDRESS_REFERENCE)
-        if len(df['EIRCODE'].unique())==1:
-            row['EIRCODE'] = df.iloc[0]['EIRCODE']
-        if len(df['LONGITUDE'].unique())==1:
-            row['LONGITUDE'] = df.iloc[0]['LONGITUDE']
-        if len(df['LATITUDE'].unique())==1:
-            row['LATITUDE'] = df.iloc[0]['LATITUDE']
+    row['Status'] = status
+    row['Geo_Address'] = df.iloc[0]['Full_Address']
+    row['ADDRESS_REFERENCE'] = df.iloc[0]['ADDRESS_REFERENCE']
+    row['BUILDING_ID'] = df.iloc[0]['BUILDING_ID']
+    row['EIRCODE'] = df.iloc[0]['EIRCODE']
+    row['SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
+    row['LATITUDE'] = df.iloc[0]['LATITUDE']
+    row['LONGITUDE'] = df.iloc[0]['LONGITUDE']
+    dict[row['DwellingData_id']]=list(df.ADDRESS_REFERENCE)
+    # df >1
+    if len(df['SMALL_AREA_REF'].unique())==1:
+        row['UNIQUE_SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
+    if len(df['EIRCODE'].unique())==1:
+        row['UNIQUE_EIRCODE'] = df.iloc[0]['EIRCODE']
+    if len(df['LONGITUDE'].unique())==1:
+        row['UNIQUE_LONGITUDE'] = df.iloc[0]['LONGITUDE']
+    if len(df['LATITUDE'].unique())==1:
+        row['UNIQUE_LATITUDE'] = df.iloc[0]['LATITUDE']
     return row
 
 def remove_accents(string):
@@ -180,17 +172,18 @@ def search_MPRN(row,geo_df,df_thoroughfare,dict):
             #row = match(row, search_apart, 'SAME_SA',dict)
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
             row = fuzzy_process(search_apart, row, address,dict,None)
-    if search_num is not None:
-        if (search_num.shape[0]==1):
-            row = match(row, search_num,'MATCH',dict)
-        elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
-            row = fuzzy_process(search_num, row, address, dict, 'SAME_SA')
-        elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
-            row = fuzzy_process(search_num, row, address,dict,None)
+    if len(row['Status'])==0:
+        if search_num is not None:
+            if (search_num.shape[0]==1):
+                row = match(row, search_num,'MATCH',dict)
+            elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
+                row = fuzzy_process(search_num, row, address, dict, 'SAME_SA')
+            elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
+                row = fuzzy_process(search_num, row, address,dict,None)
+            else:
+                cant_find=True
         else:
-            cant_find=True
-    else:
-        cant_find = True
+            cant_find = True
     if (cant_find):
         row['Status']='CANT FIND'
     return row
@@ -402,10 +395,9 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare,dict):
         print row
     return row
 
-def process_each_category(D4_dwelling_df,D4_geo_df):
+def process_each_category(D4_dwelling_df,D4_geo_df,dict):
     # Group starts with numbers execpt
     # Still have <digit><letter>
-    dict={}
     D4_dwelling_df = D4_dwelling_df.replace(r'\b[NUMBER|UNIT]\b', '', inplace=False, regex=True)
     D4_dwelling_df['Dwelling AddressLine1'] = D4_dwelling_df['Dwelling AddressLine1'].apply(lambda x: x.strip())
     D4_dwelling_num_only_df = D4_dwelling_df[(D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'\b^\d+\b',na=False,regex=True)) & ~D4_dwelling_df.loc[:,'Dwelling AddressLine1'].str.contains(
@@ -462,9 +454,8 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
-
-
-    dwelling_df = pd.read_csv(path+'Dwelling_D1.csv',skipinitialspace=True,low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Dwelling_D1_4000.csv',skipinitialspace=True,low_memory=False).fillna('')
+    #dwelling_df = pd.read_csv('Cant_Find_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -514,12 +505,17 @@ def main():
     dwelling_df['Geo_Address'] = ""
     dwelling_df['LATITUDE'] = ""
     dwelling_df['LONGITUDE'] = ""
+    dwelling_df['UNIQUE_SMALL_AREA_REF']=""
+    dwelling_df['UNIQUE_EIRCODE']=""
+    dwelling_df['UNIQUE_LATITUDE']=""
+    dwelling_df['UNIQUE_LONGITUDE']=""
     dwelling_df_counties_replace = dwelling_df.replace({'MPRN county': dict_strange_county}, regex=True)
     dwelling_dublin = dwelling_df_counties_replace.groupby('MPRN city')
     geo_dublin =  geo_df.groupby('PRINCIPAL_POST_TOWN')
     dwelling_county= dwelling_df_counties_replace.groupby('MPRN county')
     geo_county =  geo_df.groupby('COUNTY')
 
+    dict={}
     for i in dublin_cities:
         print i
         if i =='DUBLIN 2':
@@ -527,12 +523,13 @@ def main():
 
         # if (i == 'DUBLIN 3'):
 
-        each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
+        each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i),dict)
         dwelling_df_counties_replace.update(each_type_dublin)
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
 
-    each_type_dublin.to_csv(path_or_buf='Dwelling_D1.csv', index=None, header=True)
+
+    each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
 
     # for j in counties:
     #     print j
@@ -543,14 +540,14 @@ def main():
     #         geo_outside_DUBLIN = geo_county.get_group(j)
     #         dwelling_DUBLIN =dwelling_county.get_group(j)
     #         dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
-    #         each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+    #         each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN,dict)
     #     else:
-    #         each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #         each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j),dict)
     #     dwelling_df_counties_replace.update(each_type_county)
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
     #dwelling_df_counties_replace.to_csv(path_or_buf='Results_Blank_Fields.csv', index=None, header=True)
     df_of_address_reference = pd.DataFrame.from_dict(dict,orient='index')
-    df_of_address_reference.to_csv(path_or_buf='List_of_ADDRESS_REFERENCE', index=None, header=True)
+    df_of_address_reference.to_csv(path_or_buf='List_of_ADDRESS_REFERENCE.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
