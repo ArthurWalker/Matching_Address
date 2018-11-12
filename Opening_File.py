@@ -47,9 +47,9 @@ def main():
 
     #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS|SAME_SA_NO_NUMs|Worst_Fuzzy_Case',regex=True)]
     #dwelling_df = dwelling_df[dwelling_df.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
-    #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS', regex=True)]
+    dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'SAME SA|SAME SA Worst Fuzzy Case|MANY RESULTS|SAME SA NO NUM', regex=True)]
     #dwelling_df = dwelling[dwelling['MPRN city'].isin(['DUBLIN 1'])]
-    dwelling_df = dwelling[dwelling['MPRN county']== '']
+    #dwelling_df = dwelling[dwelling['MPRN county']== '']
     #sample_df = dwelling_df.sample(n=4000)
     #sample_df = sample_df.apply(pick_rand)
 
@@ -60,8 +60,8 @@ def main():
     #dwelling_df = dwelling[dwelling['COUNTY']=='DUBLIN']
     #dwelling.shape[0]
     #dwelling_df.shape[0]
-    #sample_df = dwelling.sample(n=4000)
-    dwelling_df.to_csv(path_or_buf='EMPTY_MPRN_COUNTY.csv', index=None, header=True)
+    sample_df = dwelling_df.sample(n=10)
+    sample_df.to_csv(path_or_buf='Results_Blank_Fields_10_MANY_RESULTS.csv', index=None, header=True)
 
     print 'Hi'
 
