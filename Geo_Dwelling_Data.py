@@ -74,7 +74,7 @@ def match(row,df,status,dict):
     row['SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
     row['LATITUDE'] = df.iloc[0]['LATITUDE']
     row['LONGITUDE'] = df.iloc[0]['LONGITUDE']
-    dict[row['DwellingData_id']]=list(df.ADDRESS_REFERENCE)
+    row['DwellingData_id']=list(df.ADDRESS_REFERENCE)
     # df >1
     if len(df['SMALL_AREA_REF'].unique())==1:
         row['UNIQUE_SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
@@ -264,7 +264,7 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare,dict):
                 # Checking if it matches
                 last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
                 if (last_search.shape[0]==1):
-                    row = match(row, search_num,'MATCH',dict)
+                    row = match(row, last_search,'MATCH',dict)
                 else:
                     if (len(search_num['SMALL_AREA_REF'].unique())==1):
                         row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,dict,'SAME_SA')
@@ -329,8 +329,8 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare,dict):#
                 else:
                     # Checking if it matches
                     last_search = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1,dwel2))]
-                    if (last_search.shape[0]):
-                        row = match(row, search_num,'MATCH',dict)
+                    if (last_search.shape[0]==1):
+                        row = match(row, last_search,'MATCH',dict)
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                             row = fuzzy_process(search_num, row, dwel1 + " " + dwel2,dict,'SAME_SA')
@@ -465,6 +465,7 @@ def main():
     print "Initializing data"
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
+    #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
     #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
     dwelling_df = pd.read_csv('Results_Blank_Fields_4000_MANY_RESULTS.csv', skipinitialspace=True, low_memory=False).fillna('')
@@ -521,6 +522,7 @@ def main():
     dwelling_df['UNIQUE_EIRCODE']=""
     dwelling_df['UNIQUE_LATITUDE']=""
     dwelling_df['UNIQUE_LONGITUDE']=""
+    dwelling_df['DwellingData_id']=""
     dwelling_df_counties_replace = dwelling_df.replace({'MPRN county': dict_strange_county}, regex=True)
     dwelling_dublin = dwelling_df_counties_replace.groupby('MPRN city')
     geo_dublin =  geo_df.groupby('PRINCIPAL_POST_TOWN')
@@ -565,8 +567,8 @@ def main():
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
 
     # Saving the dictionary:
-    with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
-        pickle.dump(dict, f)
+    # with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
+    #     pickle.dump(dict, f,protocol=pickle.HIGHEST_PROTOCOL)
 
     dwelling_df_counties_replace.to_csv(path_or_buf='Results_Blank_Fields.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))

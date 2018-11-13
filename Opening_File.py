@@ -1,7 +1,7 @@
 import pandas as pd
 import os
 import numpy as np
-
+import pickle
 
 def main():
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
@@ -61,8 +61,10 @@ def main():
     #dwelling.shape[0]
     #dwelling_df.shape[0]
     sample_df = dwelling_df.sample(n=10)
-    sample_df.to_csv(path_or_buf='Results_Blank_Fields_10_MANY_RESULTS.csv', index=None, header=True)
-
+    #sample_df.to_csv(path_or_buf='Results_Blank_Fields_10_MANY_RESULTS.csv', index=None, header=True)
+    dict = [['aa','bbb'],['11','22']]
+    with open('test_dict.pkl', 'w') as f:  # Python 3: open(..., 'wb')
+        pickle.dump(dict, f)
     print 'Hi'
 
 
