@@ -8,12 +8,12 @@ def main():
 
     #dwelling = pd.read_csv(path+'.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    dwelling = pd.read_csv(path+'Results_Blank_Fields.csv', skipinitialspace=True, low_memory=False).fillna('')
+    #dwelling = pd.read_csv(path+'Results_Blank_Fields.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    dublin_cities = ['DUBLIN 1', 'DUBLIN 2', 'DUBLIN 3', 'DUBLIN 4', 'DUBLIN 5', 'DUBLIN 6', 'DUBLIN 7', 'DUBLIN 8',
-                     'DUBLIN 9', 'DUBLIN 10', 'DUBLIN 11', 'DUBLIN 12', 'DUBLIN 13', 'DUBLIN 14', 'DUBLIN 15',
-                     'DUBLIN 16', 'DUBLIN 17', 'DUBLIN 18', 'DUBLIN 20', 'DUBLIN 22','DUBLIN 24',
-                     'DUBLIN 6W']
+    #dublin_cities = ['DUBLIN 1', 'DUBLIN 2', 'DUBLIN 3', 'DUBLIN 4', 'DUBLIN 5', 'DUBLIN 6', 'DUBLIN 7', 'DUBLIN 8',
+    #                  'DUBLIN 9', 'DUBLIN 10', 'DUBLIN 11', 'DUBLIN 12', 'DUBLIN 13', 'DUBLIN 14', 'DUBLIN 15',
+    #                  'DUBLIN 16', 'DUBLIN 17', 'DUBLIN 18', 'DUBLIN 20', 'DUBLIN 22','DUBLIN 24',
+    #                  'DUBLIN 6W']
 
     #dwelling.shape[0]
     # list_county = ['DUBLIN ']*13
@@ -47,7 +47,7 @@ def main():
 
     #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS|SAME_SA_NO_NUMs|Worst_Fuzzy_Case',regex=True)]
     #dwelling_df = dwelling_df[dwelling_df.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
-    dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'SAME SA|SAME SA Worst Fuzzy Case|MANY RESULTS|SAME SA NO NUM', regex=True)]
+    #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'SAME SA|SAME SA Worst Fuzzy Case|MANY RESULTS|SAME SA NO NUM', regex=True)]
     #dwelling_df = dwelling[dwelling['MPRN city'].isin(['DUBLIN 1'])]
     #dwelling_df = dwelling[dwelling['MPRN county']== '']
     #sample_df = dwelling_df.sample(n=4000)
@@ -60,12 +60,11 @@ def main():
     #dwelling_df = dwelling[dwelling['COUNTY']=='DUBLIN']
     #dwelling.shape[0]
     #dwelling_df.shape[0]
-    sample_df = dwelling_df.sample(n=10)
+    #sample_df = dwelling_df.sample(n=10)
     #sample_df.to_csv(path_or_buf='Results_Blank_Fields_10_MANY_RESULTS.csv', index=None, header=True)
-    dict = [['aa','bbb'],['11','22']]
-    with open('test_dict.pkl', 'w') as f:  # Python 3: open(..., 'wb')
-        pickle.dump(dict, f)
-    print 'Hi'
+    with open('dict_ADDRESS_REFERENCE.pkl') as f:  # Python 3: open(..., 'rb')
+        dict = pickle.load(f)
+    print dict
 
 
 if __name__=='__main__':

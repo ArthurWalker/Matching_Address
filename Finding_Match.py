@@ -7,7 +7,7 @@ from fuzzywuzzy import fuzz
 import time
 from tqdm import tqdm
 import pickle
-
+import numexpr
 
 dict={}
 
