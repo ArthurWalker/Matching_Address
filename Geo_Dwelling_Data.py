@@ -426,18 +426,18 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
 
     tqdm.pandas()
     print '     Dealing with only num or building:'
-    #D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
     print '     Dealing with building:'
     D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,df_thoroughfare_geo_APART,), axis=1)
     print '     Dealing with group contain <num><letter>'
-    #D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
     print '     Dealing with group starting with letters:'
-    #D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,), axis=1)
+    D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,), axis=1)
 
-    #D4_dwelling_df.update(D4_dwelling_num_only_df)
+    D4_dwelling_df.update(D4_dwelling_num_only_df)
     D4_dwelling_df.update(D4_dwelling_numm_withNOAPART_df)
-    #D4_dwelling_df.update(D4_dwelling_num_letter_df)
-    #D4_dwelling_df.update(D4_dwelling_letters_only_df)
+    D4_dwelling_df.update(D4_dwelling_num_letter_df)
+    D4_dwelling_df.update(D4_dwelling_letters_only_df)
 
     return D4_dwelling_df
 
@@ -448,11 +448,11 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
+    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
     #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv(path+'Dwelling_D1_4000.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Result_Blank.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -530,19 +530,19 @@ def main():
 
     #each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
 
-    # for j in counties:
-    #     print j
-    #     # if (j == 'WICKLOW'):
-    #     # #    break
-    #     if j in dwelling_county.groups.keys():
-    #         if (j=='DUBLIN'):
-    #             geo_outside_DUBLIN = geo_county.get_group(j)
-    #             dwelling_DUBLIN =dwelling_county.get_group(j)
-    #             dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
-    #             each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
-    #         else:
-    #             each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-    #         dwelling_df_counties_replace.update(each_type_county)
+    for j in counties:
+        print j
+        # if (j == 'WICKLOW'):
+        # #    break
+        if j in dwelling_county.groups.keys():
+            if (j=='DUBLIN'):
+                geo_outside_DUBLIN = geo_county.get_group(j)
+                dwelling_DUBLIN =dwelling_county.get_group(j)
+                dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
+                each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+            else:
+                each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+            dwelling_df_counties_replace.update(each_type_county)
 
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
 
@@ -550,7 +550,7 @@ def main():
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='D1_Results.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_13_11.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
