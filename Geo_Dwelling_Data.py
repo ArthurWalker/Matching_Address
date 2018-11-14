@@ -450,9 +450,9 @@ def main():
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
     #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv(path+'Results_Blank_Fields_False_MANY_RESULTS.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Dwelling_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -522,7 +522,7 @@ def main():
         # if i =='DUBLIN 2':
         #     break
         # if (i == 'DUBLIN 3'):
-        if i in dwelling_dublin.groups.keys():
+        if i=='DUBLIN 1' and i in dwelling_dublin.groups.keys():
             each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
             dwelling_df_counties_replace.update(each_type_dublin)
             total+=dwelling_dublin.get_group(i).shape[0]
@@ -532,30 +532,30 @@ def main():
 
     #each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
 
-    for j in counties:
-        print j
-        # if (j == 'WICKLOW'):
-        # #    break
-        if j in dwelling_county.groups.keys():
-            if (j=='DUBLIN'):
-                geo_outside_DUBLIN = geo_county.get_group(j)
-                dwelling_DUBLIN =dwelling_county.get_group(j)
-                dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
-                each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
-                total += dwelling_outside_DUBLIN.shape[0]
-            else:
-                each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-                total += dwelling_county.get_group(j).shape[0]
-            dwelling_df_counties_replace.update(each_type_county)
-            print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
+    # for j in counties:
+    #     print j
+    #     # if (j == 'WICKLOW'):
+    #     # #    break
+    #     if j in dwelling_county.groups.keys():
+    #         if (j=='DUBLIN'):
+    #             geo_outside_DUBLIN = geo_county.get_group(j)
+    #             dwelling_DUBLIN =dwelling_county.get_group(j)
+    #             dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
+    #             each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+    #             total += dwelling_outside_DUBLIN.shape[0]
+    #         else:
+    #             each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #             total += dwelling_county.get_group(j).shape[0]
+    #         dwelling_df_counties_replace.update(each_type_county)
+    #         print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
-    #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='D1.csv', index=None, header=True)
 
     # Saving the dictionary:
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_13_11.csv', index=None, header=True)
+    # dwelling_df_counties_replace.to_csv(path_or_buf='Results_13_11.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
