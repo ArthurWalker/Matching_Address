@@ -262,7 +262,7 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
     #     print(type(ex))  # the exception instance # arguments stored in .args
     #     print(ex)
     #     print row
-    # return row
+    return row
 
 def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
     other_way = False
@@ -547,13 +547,13 @@ def main():
     #         dwelling_df_counties_replace.update(each_type_county)
     #         print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
-    #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
+    each_type_dublin.to_csv(path_or_buf='D1_Results.csv', index=None, header=True)
 
     # Saving the dictionary:
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_14_11.csv', index=None, header=True)
+    #dwelling_df_counties_replace.to_csv(path_or_buf='Results_14_11.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
