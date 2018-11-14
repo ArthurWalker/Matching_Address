@@ -120,7 +120,7 @@ def fuzzy_process(search_num,row,dwel,status):
                 row = match(row, max_rows, 'Worst Fuzzy Case')
             else:
                 row['Percent_Match']=max_rows['Fuzzy'].max()
-                if (status == 'SAME_SA') or (len(df['SMALL_AREA_REF'].unique())==1):
+                if (status == 'SAME_SA') or (len(max_rows['SMALL_AREA_REF'].unique())==1):
                     row = match(row, max_rows, 'SAME SA')
                 else:
                     row=match(row,max_rows,'MANY RESULTS')
@@ -130,7 +130,7 @@ def fuzzy_process(search_num,row,dwel,status):
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
             else:
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
-                if (status == 'SAME_SA'):
+                if (status == 'SAME_SA' or len(max_rows['SMALL_AREA_REF'].unique())==1):
                     row = match(row, max_rows, 'SAME SA Worst Fuzzy Case')
                 else:
                     row = match(row, max_rows,'Worst Fuzzy Case')
