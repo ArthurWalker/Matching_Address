@@ -548,7 +548,7 @@ def main():
     #         dwelling_df_counties_replace.update(each_type_county)
     #         print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
-    each_type_dublin.to_csv(path_or_buf='D1_Results.csv', index=None, header=True
+    each_type_dublin.to_csv(path_or_buf='D1_Results.csv', index=None, header=True)
 
     # Saving the dictionary:
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
