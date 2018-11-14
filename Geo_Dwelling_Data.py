@@ -120,7 +120,7 @@ def fuzzy_process(search_num,row,dwel,status):
                 row = match(row, max_rows, 'Worst Fuzzy Case')
             else:
                 row['Percent_Match']=max_rows['Fuzzy'].max()
-                if (status == 'SAME_SA'):
+                if (status == 'SAME_SA') or (len(df['SMALL_AREA_REF'].unique())==1):
                     row = match(row, max_rows, 'SAME SA')
                 else:
                     row=match(row,max_rows,'MANY RESULTS')
@@ -448,9 +448,9 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
     #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv(path+'Result_Blank.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Results_Blank_Fields_False_MANY_RESULTS.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -516,15 +516,17 @@ def main():
     #dwelling_dublin = dwelling_df_counties_replace.groupby('MPRN city')
     #dwelling_county = dwelling_df_counties_replace.groupby('MPRN county')
 
-
+    total=0
     for i in dublin_cities:
         print i
         # if i =='DUBLIN 2':
         #     break
         # if (i == 'DUBLIN 3'):
-        if i=='DUBLIN 1' and i in dwelling_dublin.groups.keys():
+        if i in dwelling_dublin.groups.keys():
             each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
             dwelling_df_counties_replace.update(each_type_dublin)
+            total+=dwelling_dublin.get_group(i).shape[0]
+            print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
 
@@ -540,9 +542,12 @@ def main():
                 dwelling_DUBLIN =dwelling_county.get_group(j)
                 dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
                 each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+                total += dwelling_outside_DUBLIN.shape[0]
             else:
                 each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+                total += dwelling_county.get_group(j).shape[0]
             dwelling_df_counties_replace.update(each_type_county)
+            print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
 
