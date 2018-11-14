@@ -77,7 +77,7 @@ def match(row,df,status):
     row['SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
     row['LATITUDE'] = df.iloc[0]['LATITUDE']
     row['LONGITUDE'] = df.iloc[0]['LONGITUDE']
-    dict[row['DwellingData_id']]=list(df.ADDRESS_REFERENCE)
+    dict[row['DwellingData_id'].values[0]]=list(df.ADDRESS_REFERENCE)
     # df >1
     if len(df['SMALL_AREA_REF'].unique())==1:
         row['UNIQUE_SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
@@ -192,7 +192,6 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         row['Status']='CANT FIND'
     return row
 
-
 def find_county(row):
     if (re.search(r'\bDUBLIN \d+\b',row['Dwelling Address'])):
         row['MPRN city']=re.search(r'\bDUBLIN \d+\b',row['Dwelling Address']).group()
@@ -205,73 +204,73 @@ def looking_for_matching_for_no_mprn_county(df):
     return df
 
 def search_num_first(row,D4_geo_num_df,df_thoroughfare):
-    try:
-        dwel1 = (row['Dwelling AddressLine1'].strip())
-        dwel2 = (row['Dwelling AddressLine2'].strip())
-        dwel3 = (row['Dwelling AddressLine3'].strip())
-        address = dwel1 + " " +dwel2 + " " +dwel3
-        address = address.strip()
-        address = re.sub(r'\s{2,}', '', address)
-        # num part
-        if (re.search(r'\b^[0-9]+\b', dwel1)):
-            num = re.search(r'\b^[0-9]+\b', dwel1).group()
-            last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
-        elif (re.search(r'\b^[0-9]+[A-Z]+\b',dwel1)):
-            dit_let =re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).group()
-            last_digt = re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).end()
-            num = re.search(r'\b^[0-9]+', dit_let).group()
-        # later part: it can be digit+letters or letter. But 0 assume that they are letters
-        thoroughfare_dwel1 = dwel1[last_digit + 1:]  # this thorough can be the Building group name
-        # Search BUILDING_GROUP_NAME/ THOROUGHFARE:
-        if (len(thoroughfare_dwel1)==0):
-            thoroughfare_dwel1=dwel2
-        search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]
-        if (search_thorougfare.shape[0] == 0):
-            thoroughfare = dwel2
-            if bool(re.search(r'\b^[0-9]+\b', dwel2)):
-                num_dwel = re.search(r'\b^[0-9]+\b', dwel2).group()
-                last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
-                thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
-            search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
-        search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
-        if search_num.shape[0] == 1:
-            if (search_num.iloc[0]['Status']==""):
-                row = match(row, search_num,'MATCH')
-        elif search_num.shape[0] > 1:
-            num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
-            if (num_match.shape[0] == 1):
-                row = match(row,num_match,'MATCH')
-            else:
-                # Checking if it matches
-                last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
-                if (last_search.shape[0]==1):
-                    row = match(row, last_search,'MATCH')
-                else:
-                    if (len(search_num['SMALL_AREA_REF'].unique())==1):
-                        row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,'SAME_SA')
-                    else:
-                        #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
-                        # Search by fuzzy wuzzy
-                        # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
-                        row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,None)
+    # try:
+    dwel1 = row['Dwelling AddressLine1'].str.strip().values[0]
+    dwel2 = row['Dwelling AddressLine2'].str.strip().values[0]
+    dwel3 = row['Dwelling AddressLine3'].str.strip().values[0]
+    address = dwel1 + " " +dwel2 + " " +dwel3
+    address = address.strip()
+    address = re.sub(r'\s{2,}', '', address)
+    # num part
+    if (re.search(r'\b^[0-9]+\b', dwel1)):
+        num = re.search(r'\b^[0-9]+\b', dwel1).group()
+        last_digit = re.search(r'\b^[0-9]+\b', dwel1).end()
+    elif (re.search(r'\b^[0-9]+[A-Z]+\b',dwel1)):
+        dit_let =re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).group()
+        last_digt = re.search(r'\b^[0-9]+[A-Z]+\b',dwel1).end()
+        num = re.search(r'\b^[0-9]+', dit_let).group()
+    # later part: it can be digit+letters or letter. But 0 assume that they are letters
+    thoroughfare_dwel1 = dwel1[last_digit + 1:]  # this thorough can be the Building group name
+    # Search BUILDING_GROUP_NAME/ THOROUGHFARE:
+    if (len(thoroughfare_dwel1)==0):
+        thoroughfare_dwel1=dwel2
+    search_thorougfare = D4_geo_num_df.loc[D4_geo_num_df['Full_Address'].str.contains(thoroughfare_dwel1)]
+    if (search_thorougfare.shape[0] == 0):
+        thoroughfare = dwel2
+        if bool(re.search(r'\b^[0-9]+\b', dwel2)):
+            num_dwel = re.search(r'\b^[0-9]+\b', dwel2).group()
+            last_digit = re.search(r'\b^[0-9]+\b', num_dwel).end()
+            thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
+        search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
+    search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
+    if search_num.shape[0] == 1:
+        if (search_num.iloc[0]['Status']==""):
+            row = match(row, search_num,'MATCH')
+    elif search_num.shape[0] > 1:
+        num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
+        if (num_match.shape[0] == 1):
+            row = match(row,num_match,'MATCH')
         else:
-            if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
-                row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs')
+            # Checking if it matches
+            last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
+            if (last_search.shape[0]==1):
+                row = match(row, last_search,'MATCH')
             else:
-                row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
-    except Exception as ex:
-        print(type(ex))  # the exception instance # arguments stored in .args
-        print(ex)
-        print row
-    return row
+                if (len(search_num['SMALL_AREA_REF'].unique())==1):
+                    row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,'SAME_SA')
+                else:
+                    #row['Status'] = list(search_num.BUILDING_ID.map(str) + "/" + search_num.ADDRESS_POINT_ID.map(str))
+                    # Search by fuzzy wuzzy
+                    # row = fuzzy_process(search_num,row,dwel1+" "+dwel2)
+                    row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,None)
+    else:
+        if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
+            row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs')
+        else:
+            row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
+    # except Exception as ex:
+    #     print(type(ex))  # the exception instance # arguments stored in .args
+    #     print(ex)
+    #     print row
+    # return row
 
 def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
     other_way = False
     try:
         search_num=None
-        dwel1 = row['Dwelling AddressLine1'].strip()
-        dwel2 = row['Dwelling AddressLine2'].strip()
-        dwel3 = row['Dwelling AddressLine3'].strip()
+        dwel1 = row['Dwelling AddressLine1'].str.strip().values[0]
+        dwel2 = row['Dwelling AddressLine2'].str.strip().values[0]
+        dwel3 = row['Dwelling AddressLine3'].str.strip().values[0]
         num =""
         if bool(re.search(r'\b[0-9]+\b',dwel1)):
             num = re.search(r'\b[0-9]+\b',dwel1).group()
@@ -337,55 +336,55 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
 
 def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
     other_way=False
-    try:
-        mprn_house_no = row['MPRN house no'].strip()
-        street = row['MPRN street'].strip()
-        search_street = D4_geo_num_df[D4_geo_num_df.loc[:,'Full_Address'].str.contains(street)]
-        if (search_street.shape[0]>0):
-            search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(mprn_house_no),regex=True)]
-            if (search_num.shape[0]==1 or search_street.shape[0]==1):
-                row=match(row,search_num,'MATCH')
-            elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
-                if (len(search_num['SMALL_AREA_REF'].unique()) == 1 ):
-                    row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'], 'SAME_SA')
-                else:
-                    row = fuzzy_process(search_street, row, row['MPRN house no'] + " " + row['MPRN street'], 'SAME_SA')
-            elif search_num.shape[0]>1:
-                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'],None)
+    #try:
+    mprn_house_no = row['MPRN house no'].str.strip().values[0]
+    street = row['MPRN street'].str.strip().values[0]
+    search_street = D4_geo_num_df[D4_geo_num_df.loc[:,'Full_Address'].str.contains(street)]
+    if (search_street.shape[0]>0):
+        search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(mprn_house_no),regex=True)]
+        if (search_num.shape[0]==1 or search_street.shape[0]==1):
+            row=match(row,search_num,'MATCH')
+        elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
+            if (len(search_num['SMALL_AREA_REF'].unique()) == 1 ):
+                row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'], 'SAME_SA')
             else:
-                num = re.search(r'[0-9]+',mprn_house_no).group()
-                search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(num),regex=True)]
-                if (search_num.shape[0] == 1 or search_street.shape[0] == 1):
-                    row = match(row,search_num,'MATCH_not100%')
-                elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
-                    if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                        row = match(row, search_num, 'SAME_SA_not100')
-                    else:
-                        row = match(row, search_street, 'SAME_SA_not100')
-                elif search_num.shape[0] > 0:
-                    num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
-                    if (num_match.shape[0] == 1):
-                        row = match(row, num_match,'MATCH')
-                    else:
-                        # Checking if it matches
-                        last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(num, street))]
-                        if (last_search.shape[0]==1):
-                            row = match(row, last_search,'MATCH')
-                        else:
-                            if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                                row = fuzzy_process(search_num, row, num + " " + street,'SAME_SA')
-                            else:
-                                row = fuzzy_process(search_num, row, num + " " + street,None)
-                else:
-                    other_way=True
+                row = fuzzy_process(search_street, row, row['MPRN house no'] + " " + row['MPRN street'], 'SAME_SA')
+        elif search_num.shape[0]>1:
+            row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'],None)
         else:
-            other_way=True
-        if (other_way):
-            row = search_MPRN(row, D4_geo_num_df,df_thoroughfare)
-    except Exception as ex:
-        print(type(ex))  # the exception instance # arguments stored in .args
-        print(ex)
-        print row
+            num = re.search(r'[0-9]+',mprn_house_no).group()
+            search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(num),regex=True)]
+            if (search_num.shape[0] == 1 or search_street.shape[0] == 1):
+                row = match(row,search_num,'MATCH_not100%')
+            elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
+                if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
+                    row = match(row, search_num, 'SAME_SA_not100')
+                else:
+                    row = match(row, search_street, 'SAME_SA_not100')
+            elif search_num.shape[0] > 0:
+                num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
+                if (num_match.shape[0] == 1):
+                    row = match(row, num_match,'MATCH')
+                else:
+                    # Checking if it matches
+                    last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(num, street))]
+                    if (last_search.shape[0]==1):
+                        row = match(row, last_search,'MATCH')
+                    else:
+                        if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
+                            row = fuzzy_process(search_num, row, num + " " + street,'SAME_SA')
+                        else:
+                            row = fuzzy_process(search_num, row, num + " " + street,None)
+            else:
+                other_way=True
+    else:
+        other_way=True
+    if (other_way):
+        row = search_MPRN(row, D4_geo_num_df,df_thoroughfare)
+    # except Exception as ex:
+    #     print(type(ex))  # the exception instance # arguments stored in .args
+    #     print(ex)
+    #     print row
     return row
 
 def process_each_category(D4_dwelling_df,D4_geo_df):
@@ -420,25 +419,28 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
     D4_dwelling_letters_digit_df = D4_dwelling_df[
         (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'^[A-Z]+[0-9]+\b', na=False, regex=True))]
 
-
-    #filter = D4_dwelling_letters_only_df[D4_dwelling_letters_only_df.loc[:,'Dwelling AddressLine1'].str.contains(r'\bWELLINGTON\b',regex=True)]
-   # filter.iloc[0]['Dwelling AddressLine1']
-
-    tqdm.pandas()
+    #tqdm.pandas()
     print '     Dealing with only num or building:'
-    D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    #D4_dwelling_num_only_df = D4_dwelling_num_only_df.progress_apply(search_num_first, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    if D4_dwelling_num_only_df.shape[0]>0:
+        D4_dwelling_num_only_df = search_num_first(D4_dwelling_num_only_df,D4_geo_num_df, df_thoroughfare_geo_num)
     print '     Dealing with building:'
-    D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,df_thoroughfare_geo_APART,), axis=1)
+    #D4_dwelling_numm_withNOAPART_df = D4_dwelling_numm_withNOAPART_df.progress_apply(search_num_first, args=(D4_geo_num_df_withAPART,df_thoroughfare_geo_APART,), axis=1)
+    if D4_dwelling_numm_withNOAPART_df.shape[0]>0:
+        D4_dwelling_numm_withNOAPART_df = search_num_first(D4_dwelling_numm_withNOAPART_df,D4_geo_num_df_withAPART, df_thoroughfare_geo_APART)
     print '     Dealing with group contain <num><letter>'
-    D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    #D4_dwelling_num_letter_df = D4_dwelling_num_letter_df.progress_apply(search_num_letter, args=(D4_geo_num_df,df_thoroughfare_geo_num,), axis=1)
+    if (D4_dwelling_num_letter_df.shape[0]>0):
+        D4_dwelling_num_letter_df = search_num_letter(D4_dwelling_num_letter_df,D4_geo_num_df, df_thoroughfare_geo_num)
     print '     Dealing with group starting with letters:'
-    D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,), axis=1)
+    #D4_dwelling_letters_only_df = D4_dwelling_letters_only_df.progress_apply(search_letter_first, args=(D4_geo_letters_df,df_thoroughfare_geo_letter,), axis=1)
+    if (D4_dwelling_letters_only_df.shape[0]>0):
+        D4_dwelling_letters_only_df = search_letter_first(D4_dwelling_letters_only_df,D4_geo_letters_df, df_thoroughfare_geo_letter)
 
     D4_dwelling_df.update(D4_dwelling_num_only_df)
     D4_dwelling_df.update(D4_dwelling_numm_withNOAPART_df)
     D4_dwelling_df.update(D4_dwelling_num_letter_df)
     D4_dwelling_df.update(D4_dwelling_letters_only_df)
-
     return D4_dwelling_df
 
 def main():
@@ -450,9 +452,9 @@ def main():
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
     #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv(path+'Results_Blank_Fields_False_MANY_RESULTS.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Dwelling_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
+    geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'[\,\.-\/]', ' ', inplace=False, regex=True)
     dwelling_df = dwelling_df.replace(r'\s{2,}', ' ', inplace=False, regex=True)
@@ -522,32 +524,28 @@ def main():
         # if i =='DUBLIN 2':
         #     break
         # if (i == 'DUBLIN 3'):
-        if i in dwelling_dublin.groups.keys():
+        if i=='DUBLIN 1' and i in dwelling_dublin.groups.keys():
             each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
             dwelling_df_counties_replace.update(each_type_dublin)
             total+=dwelling_dublin.get_group(i).shape[0]
             print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
-    # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
-
-    #each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
-
-    for j in counties:
-        print j
-        # if (j == 'WICKLOW'):
-        # #    break
-        if j in dwelling_county.groups.keys():
-            if (j=='DUBLIN'):
-                geo_outside_DUBLIN = geo_county.get_group(j)
-                dwelling_DUBLIN =dwelling_county.get_group(j)
-                dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
-                each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
-                total += dwelling_outside_DUBLIN.shape[0]
-            else:
-                each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
-                total += dwelling_county.get_group(j).shape[0]
-            dwelling_df_counties_replace.update(each_type_county)
-            print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
+    # for j in counties:
+    #     print j
+    #     # if (j == 'WICKLOW'):
+    #     # #    break
+    #     if j in dwelling_county.groups.keys():
+    #         if (j=='DUBLIN'):
+    #             geo_outside_DUBLIN = geo_county.get_group(j)
+    #             dwelling_DUBLIN =dwelling_county.get_group(j)
+    #             dwelling_outside_DUBLIN = dwelling_DUBLIN[~dwelling_DUBLIN['MPRN city'].isin(dublin_cities)]
+    #             each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
+    #             total += dwelling_outside_DUBLIN.shape[0]
+    #         else:
+    #             each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+    #             total += dwelling_county.get_group(j).shape[0]
+    #         dwelling_df_counties_replace.update(each_type_county)
+    #         print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
     #each_type_county.to_csv(path_or_buf='Result_Outside_Dublin.csv', index=None, header=True)
 
@@ -555,10 +553,8 @@ def main():
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_13_11.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_14_11.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
     main()
-
-
