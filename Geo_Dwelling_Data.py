@@ -77,7 +77,7 @@ def match(row,df,status):
     row['SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
     row['LATITUDE'] = df.iloc[0]['LATITUDE']
     row['LONGITUDE'] = df.iloc[0]['LONGITUDE']
-    dict[row['DwellingData_id']]=list(df.ADDRESS_REFERENCE)
+    dict[str(row['DwellingData_id'])]=list(df.ADDRESS_REFERENCE)
     # df >1
     if len(df['SMALL_AREA_REF'].unique())==1:
         row['UNIQUE_SMALL_AREA_REF'] = df.iloc[0]['SMALL_AREA_REF']
