@@ -4,11 +4,11 @@ import numpy as np
 import pickle
 
 def main():
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/File 13-11/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling = pd.read_csv(path+'Results_13_11.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv(path+'File 15-11/Results_13_11.csv', skipinitialspace=True, low_memory=False).fillna('')
 
-    #dwelling = pd.read_csv(path+'Results_Blank_Fields.csv', skipinitialspace=True, low_memory=False).fillna('')
+    geo = pd.read_csv(path+'Sample Data/GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     #dublin_cities = ['DUBLIN 1', 'DUBLIN 2', 'DUBLIN 3', 'DUBLIN 4', 'DUBLIN 5', 'DUBLIN 6', 'DUBLIN 7', 'DUBLIN 8',
     #                  'DUBLIN 9', 'DUBLIN 10', 'DUBLIN 11', 'DUBLIN 12', 'DUBLIN 13', 'DUBLIN 14', 'DUBLIN 15',
@@ -47,7 +47,7 @@ def main():
 
     #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS|SAME_SA_NO_NUMs|Worst_Fuzzy_Case',regex=True)]
     #dwelling_df = dwelling_df[dwelling_df.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
-    dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'SAME SA|MATCH|MATCH_Fuzzy|MANY RESULTS|SAME SA NO NUM', regex=True)]
+    dwelling_df = dwelling[dwelling['Status'].isin(['SAME SA','MATCH','MATCH_Fuzzy','MANY RESULTS','SAME_SA_NO_NUM'])]
     #dwelling_df = dwelling[dwelling['MPRN city'].isin(['DUBLIN 1'])]
     #dwelling_df = dwelling[dwelling['Status']== 'MANY RESULTS']
     dwelling_df = dwelling_df[~dwelling_df['UNIQUE_SMALL_AREA_REF'].isin([''])]
@@ -62,10 +62,12 @@ def main():
     #dwelling.shape[0]
     #dwelling_df.shape[0]
     sample_df = dwelling_df.sample(n=4000)
-    sample_df.to_csv(path_or_buf='Results_13_11_4000.csv', index=None, header=True)
-    # with open('dict_ADDRESS_REFERENCE.pkl') as f:  # Python 3: open(..., 'rb')
-    #     dict = pickle.load(f)
-    # print dict
+    #sample_df.to_csv(path_or_buf='Results_13_11_4000.csv', index=None, header=True)
+    with open(path+'dict_ADDRESS_REFERENCE.pkl') as f:  # Python 3: open(..., 'rb')
+        dict = pickle.load(f)
+    print dict[570255]
+
+    geo[geo[:,'ADDRESS_REFERENCE']=='8044307800000000L']
 
 
 if __name__=='__main__':

@@ -46,7 +46,7 @@ def reformat(row):
 
 def search_for_misspell(row,df_thoroughfare,col):
     df_thoroughfare['Fuzzy']=""
-    term = row[col].strip()
+    term = row[col].str.strip().values[0]
     df_thoroughfare['Fuzzy']=df_thoroughfare['THOROUGHFARE'].apply(search_fuzzy_token, args=(term,))
     if (df_thoroughfare['Fuzzy'].max()>=95):
         street = df_thoroughfare[df_thoroughfare['Fuzzy']==df_thoroughfare['Fuzzy'].max()]
@@ -114,26 +114,26 @@ def fuzzy_process(search_num,row,dwel,status):
         if max_rows.shape[0] > 1:
             df = max_rows[max_rows.loc[:,'Full_Address'].str.contains(dwel,regex=True)]
             if (df.shape[0]==1 and df['Fuzzy']>=70):
-                row = match(row,df,'MATCH_Fuzzy')
+                row = match(row.iloc[0],df,'MATCH_Fuzzy')
                 row['Percent_Match']=df['Fuzzy'].max()
             elif (df.shape[0]==1 and df['Fuzzy']<70):
-                row = match(row, max_rows, 'Worst Fuzzy Case')
+                row = match(row.iloc[0], max_rows, 'Worst Fuzzy Case')
             else:
                 row['Percent_Match']=max_rows['Fuzzy'].max()
                 if (status == 'SAME_SA') or (len(max_rows['SMALL_AREA_REF'].unique())==1):
-                    row = match(row, max_rows, 'SAME SA')
+                    if (row['Percent_Match'] >=70 ):
+                        row = match(row.iloc[0], max_rows, 'SAME SA many results')
+                    else:
+                        row = match(row.iloc[0], max_rows, 'SAME SA Worst Fuzzy Case many results')
                 else:
-                    row=match(row,max_rows,'MANY RESULTS')
+                    row=match(row.iloc[0],max_rows,'MANY RESULTS')
         elif max_rows.shape[0]==1:
-            if (max_rows['Fuzzy'].unique()>=67):
-                row = match(row, max_rows,'MATCH_Fuzzy')
+            if (max_rows['Fuzzy'].unique()>67):
+                row = match(row.iloc[0], max_rows,'MATCH_Fuzzy')
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
             else:
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
-                if (status == 'SAME_SA' or len(max_rows['SMALL_AREA_REF'].unique())==1):
-                    row = match(row, max_rows, 'SAME SA Worst Fuzzy Case')
-                else:
-                    row = match(row, max_rows,'Worst Fuzzy Case')
+                row = match(row.iloc[0], max_rows,'Worst Fuzzy Case')
         else:
             row['Status']='CANT FIND'
     else:
@@ -149,37 +149,36 @@ def search_MPRN(row,geo_df,df_thoroughfare):
     search_thoroughfare = geo_df[geo_df.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN street']),regex=True)]
     search_num = None
     search_apart = None
-    address = row['MPRN unit no'] + " " + row['MPRN house no'] + " " + row['MPRN street'] + " " + row[
-        'MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
+    address = row['MPRN unit no'] + " " + row['MPRN house no']+ " " + row['MPRN street'] + " " + row['MPRN address1'] + " " + row['MPRN address2'] + " " + row['MPRN address4']
     address = address.strip()
     address = re.sub(r'\s{2,}', '', address)
     #row = change_position_UPPER_LOWER(row)
     if (search_thoroughfare.shape[0]>0):
-        search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
+        search_num = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']),regex=True)]
     else:
         row = search_for_misspell(row, df_thoroughfare, 'MPRN address4')
         search_thoroughfare = geo_df[geo_df.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN address4']),regex=True)]
         if (search_thoroughfare.shape[0] > 0):
-            search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no'].strip()),regex=True)]
+            search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN house no']),regex=True)]
     if len(row['MPRN unit no'])!=0:
         if ('APARTMENT' in row['MPRN unit no']):
             row['MPRN unit no']= re.sub(r'\bAPARTMENT\b','',row['MPRN unit no'])
         if (search_num is not None and search_num.shape[0]>0):
-            search_apart = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no'].strip()), regex=True)]
+            search_apart = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']), regex=True)]
         else:
-            search_apart = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no'].strip()),regex=True)]
+            search_apart = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no']),regex=True)]
     if (search_apart is not None):
         if (search_apart.shape[0]==1):
-            row = match(row, search_apart,'MATCH')
+            row = match(row.iloc[0], search_apart,'MATCH')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
             row = fuzzy_process(search_apart, row,address,'SAME_SA')
-            #row = match(row, search_apart, 'SAME_SA')
+            #row = match(row.iloc[0], search_apart, 'SAME_SA')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) != 1):
             row = fuzzy_process(search_apart, row, address,None)
     if len(row['Status'])==0:
         if search_num is not None:
             if (search_num.shape[0]==1):
-                row = match(row, search_num,'MATCH')
+                row = match(row.iloc[0], search_num,'MATCH')
             elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
                 row = fuzzy_process(search_num, row, address, 'SAME_SA')
             elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
@@ -235,16 +234,17 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
     search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
     if search_num.shape[0] == 1:
         if (search_num.iloc[0]['Status']==""):
-            row = match(row, search_num,'MATCH')
+            row.update(match(row.iloc[0], search_num,'MATCH'))
+            print 'Hi'
     elif search_num.shape[0] > 1:
         num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
         if (num_match.shape[0] == 1):
-            row = match(row,num_match,'MATCH')
+            row = match(row.iloc[0],num_match,'MATCH')
         else:
             # Checking if it matches
             last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
             if (last_search.shape[0]==1):
-                row = match(row, last_search,'MATCH')
+                row = match(row.iloc[0], last_search,'MATCH')
             else:
                 if (len(search_num['SMALL_AREA_REF'].unique())==1):
                     row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,'SAME_SA')
@@ -255,7 +255,7 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
                     row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,None)
     else:
         if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
-            row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs')
+            row = match(row.iloc[0], search_thorougfare, 'SAME_SA_NO_NUMs')
         else:
             row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
     # except Exception as ex:
@@ -301,16 +301,16 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
         if (search_num is not None):
             if search_num.shape[0] == 1:
                 if (search_num.iloc[0]['Status']==""):
-                    row = match(row,search_num,'MATCH')
+                    row = match(row.iloc[0],search_num,'MATCH')
             elif search_num.shape[0] > 1:
                 num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
                 if (num_match.shape[0] == 1):
-                    row = match(row, num_match,'MATCH')
+                    row = match(row.iloc[0], num_match,'MATCH')
                 else:
                     # Checking if it matches
                     last_search = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1,dwel2))]
                     if (last_search.shape[0]==1):
-                        row = match(row, last_search,'MATCH')
+                        row = match(row.iloc[0], last_search,'MATCH')
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                             row = fuzzy_process(search_num, row, dwel1 + " " + dwel2,'SAME_SA')
@@ -319,7 +319,7 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
             else:
                 if (search_thoroughfare.shape[0] > 0 and len(search_thoroughfare['SMALL_AREA_REF'].unique()) == 1):
                     row = fuzzy_process(search_thoroughfare, row, dwel1 + " " + dwel2, 'SAME_SA')
-                    #row = match(row, search_thoroughfare, 'SAME_SA_NO_NUMs')
+                    #row = match(row.iloc[0], search_thoroughfare, 'SAME_SA_NO_NUMs')
                 else:
                     other_way = True
         else:
@@ -343,33 +343,33 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
     if (search_street.shape[0]>0):
         search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(mprn_house_no),regex=True)]
         if (search_num.shape[0]==1 or search_street.shape[0]==1):
-            row=match(row,search_num,'MATCH')
+            row=match(row.iloc[0],search_num,'MATCH')
         elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
             if (len(search_num['SMALL_AREA_REF'].unique()) == 1 ):
                 row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'], 'SAME_SA')
             else:
-                row = fuzzy_process(search_street, row, row['MPRN house no'] + " " + row['MPRN street'], 'SAME_SA')
+                row = fuzzy_process(search_street, row, row['MPRN house no']+ " " + row['MPRN street'], 'SAME_SA')
         elif search_num.shape[0]>1:
-            row = fuzzy_process(search_num, row, row['MPRN house no'] + " " + row['MPRN street'],None)
+            row = fuzzy_process(search_num, row, row['MPRN house no']+ " " + row['MPRN street'],None)
         else:
             num = re.search(r'[0-9]+',mprn_house_no).group()
             search_num = search_street[search_street.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(num),regex=True)]
             if (search_num.shape[0] == 1 or search_street.shape[0] == 1):
-                row = match(row,search_num,'MATCH_not100%')
+                row = match(row.iloc[0],search_num,'MATCH_not100%')
             elif (len(search_num['SMALL_AREA_REF'].unique()) == 1 or len(search_street['SMALL_AREA_REF'].unique()) == 1):
                 if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
-                    row = match(row, search_num, 'SAME_SA_not100')
+                    row = match(row.iloc[0], search_num, 'SAME_SA_not100')
                 else:
-                    row = match(row, search_street, 'SAME_SA_not100')
+                    row = match(row.iloc[0], search_street, 'SAME_SA_not100')
             elif search_num.shape[0] > 0:
                 num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
                 if (num_match.shape[0] == 1):
-                    row = match(row, num_match,'MATCH')
+                    row = match(row.iloc[0], num_match,'MATCH')
                 else:
                     # Checking if it matches
                     last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(num, street))]
                     if (last_search.shape[0]==1):
-                        row = match(row, last_search,'MATCH')
+                        row = match(row.iloc[0], last_search,'MATCH')
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                             row = fuzzy_process(search_num, row, num + " " + street,'SAME_SA')
@@ -452,7 +452,7 @@ def main():
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
     #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv(path+'Dwelling_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv(path+'Dwelling_D1_4000.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'Geo_D1.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
