@@ -116,7 +116,10 @@ def improve_MANY_RESULTS(row,geo_df):
         else:
             search_thoroughfare = search_city[search_city.loc[:,'THOROUGHFARE'].str.contains(row['MPRN street']) | search_city.loc[:,'THOROUGHFARE'].str.contains(row['MPRN address4'])]
             if (search_thoroughfare.shape[0]>0):
-                row = match(row, search_thoroughfare,'SAME SA')
+                if (search_thoroughfare.shape[0]==1):
+                    row = match(row, search_thoroughfare,'SAME SA MATCH')
+                if (search_thoroughfare.shape[0]>1):
+                    row = match(row, search_thoroughfare,'MANY RESULTS MATCH')
             else:
                 row = match(row, geo_df, 'MANY RESULTS NOT MATCH STREET')
     else:
@@ -207,7 +210,6 @@ def search_MPRN(row,geo_df,df_thoroughfare):
     if (cant_find):
         row['Status']='CANT FIND'
     return row
-
 
 def find_county(row):
     if (re.search(r'\bDUBLIN \d+\b',row['Dwelling Address'])):
@@ -464,9 +466,9 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/')
-    #dwelling_df = pd.read_csv(path+'Results_Blank_Fields_4000_MANY_RESULTS.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv(path+'Reformat2.csv', skipinitialspace=True, low_memory=False).fillna('')
+    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
+    #dwelling_df = pd.read_csv('BLANK 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -571,7 +573,7 @@ def main():
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_15_11.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_BLANK 1000.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
