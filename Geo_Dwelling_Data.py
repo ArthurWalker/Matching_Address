@@ -109,7 +109,7 @@ def search_fuzzy(row,address_to_cp):
 
 def improve_MANY_RESULTS(row,geo_df):
     #df_geo_add_ref = geo_df[geo_df['ADDRESS_REFERENCE'].isin(dict[float(row['DwellingData_id'])])]
-    search_city = geo_df[geo_df.loc[:,'PRINCIPAL_POST_TOWN']==row['MPRN city']]
+    search_city = geo_df[geo_df.loc[:,'PRINCIPAL_POST_TOWN'].str.contains(row['MPRN city'])| geo_df.loc[:,'SECONDARY_LOCALITY'].str.contains(row['MPRN city'])|geo_df.loc[:,'LOCALITY'].str.contains(row['MPRN city'])]
     if (search_city.shape[0]>0):
         if (search_city.shape[0]==1):
             row=match(row,search_city,'SAME SA')
@@ -119,7 +119,10 @@ def improve_MANY_RESULTS(row,geo_df):
                 if (search_thoroughfare.shape[0]==1):
                     row = match(row, search_thoroughfare,'SAME SA MATCH')
                 if (search_thoroughfare.shape[0]>1):
-                    row = match(row, search_thoroughfare,'MANY RESULTS MATCH')
+                    if (len(search_thoroughfare['SMALL_AREA_REF'].unique())==1):
+                        row = match(row, search_thoroughfare,'SAME SA MATCH')
+                    else:
+                        row = match(row, search_thoroughfare,'MANY RESULTS MATCH')
             else:
                 row = match(row, geo_df, 'MANY RESULTS NOT MATCH STREET')
     else:
@@ -466,7 +469,7 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
     dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
     #dwelling_df = pd.read_csv('BLANK 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
 
