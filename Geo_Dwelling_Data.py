@@ -107,6 +107,22 @@ def search_fuzzy_token(row,address):
 def search_fuzzy(row,address_to_cp):
     return fuzz.partial_ratio(row,address_to_cp)
 
+def improve_MANY_RESULTS(row,geo_df):
+    #df_geo_add_ref = geo_df[geo_df['ADDRESS_REFERENCE'].isin(dict[float(row['DwellingData_id'])])]
+    search_city = geo_df[geo_df.loc[:,'PRINCIPAL_POST_TOWN']==row['MPRN city']]
+    if (search_city.shape[0]>0):
+        if (search_city.shape[0]==1):
+            row=match(row,search_city,'MANY RESULTS')
+        else:
+            search_thoroughfare = search_city[search_city.loc[:,'THOROUGHFARE'].str.contains(row['MPRN street']) | search_city.loc[:,'THOROUGHFARE'].str.contains(row['MPRN address4'])]
+            if (search_thoroughfare.shape[0]>0):
+                row = match(row, search_thoroughfare,'MANY RESULTS')
+            else:
+                row = match(row, geo_df, 'MANY RESULTS NOT MATCH STREET')
+    else:
+        row = match(row, geo_df, 'MANY RESULTS NOT MATCH MPRN CITY')
+    return row
+
 def fuzzy_process(search_num,row,dwel,status):
     search_num['Fuzzy'] = search_num['Full_Address'].apply(search_fuzzy, args=(dwel,))
     if (search_num['Fuzzy'].shape[0] > 0):
@@ -123,7 +139,7 @@ def fuzzy_process(search_num,row,dwel,status):
                 if (status == 'SAME_SA') or (len(max_rows['SMALL_AREA_REF'].unique())==1):
                     row = match(row, max_rows, 'SAME SA')
                 else:
-                    row=match(row,max_rows,'MANY RESULTS')
+                    row = improve_MANY_RESULTS(row,max_rows)
         elif max_rows.shape[0]==1:
             if (max_rows['Fuzzy'].unique()>=67):
                 row = match(row, max_rows,'MATCH_Fuzzy')
