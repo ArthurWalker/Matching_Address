@@ -112,11 +112,11 @@ def improve_MANY_RESULTS(row,geo_df):
     search_city = geo_df[geo_df.loc[:,'PRINCIPAL_POST_TOWN']==row['MPRN city']]
     if (search_city.shape[0]>0):
         if (search_city.shape[0]==1):
-            row=match(row,search_city,'MANY RESULTS')
+            row=match(row,search_city,'SAME SA')
         else:
             search_thoroughfare = search_city[search_city.loc[:,'THOROUGHFARE'].str.contains(row['MPRN street']) | search_city.loc[:,'THOROUGHFARE'].str.contains(row['MPRN address4'])]
             if (search_thoroughfare.shape[0]>0):
-                row = match(row, search_thoroughfare,'MANY RESULTS')
+                row = match(row, search_thoroughfare,'SAME SA')
             else:
                 row = match(row, geo_df, 'MANY RESULTS NOT MATCH STREET')
     else:
