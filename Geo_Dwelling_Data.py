@@ -129,6 +129,10 @@ def improve_MANY_RESULTS(row,geo_df):
         row = match(row, geo_df, 'MANY RESULTS NOT MATCH MPRN CITY')
     return row
 
+def find_area(row,geo_df):
+    df = geo_df[geo_df.loc[:,'PRINCIPAL_POST_TOWN'].str.contains(row['MPRN city'])| geo_df.loc[:,'SECONDARY_LOCALITY'].str.contains(row['MPRN city'])|geo_df.loc[:,'LOCALITY'].str.contains(row['MPRN city'])]
+    return df
+
 def fuzzy_process(search_num,row,dwel,status):
     search_num['Fuzzy'] = search_num['Full_Address'].apply(search_fuzzy, args=(dwel,))
     if (search_num['Fuzzy'].shape[0] > 0):
@@ -136,7 +140,10 @@ def fuzzy_process(search_num,row,dwel,status):
         if max_rows.shape[0] > 1:
             df = max_rows[max_rows.loc[:,'Full_Address'].str.contains(dwel,regex=True)]
             if (df.shape[0]==1 and df['Fuzzy']>=70):
-                row = match(row,df,'MATCH_Fuzzy')
+                if (find_area(row,df).shape[0]==1):
+                    row = match(row,df,'MATCH_Fuzzy')
+                else:
+                    row = match(row,df,'MATCH_Fuzzy NOT IN SAME CITY')
                 row['Percent_Match']=df['Fuzzy'].max()
             elif (df.shape[0]==1 and df['Fuzzy']<70):
                 row = match(row, max_rows, 'Worst Fuzzy Case')
@@ -148,7 +155,10 @@ def fuzzy_process(search_num,row,dwel,status):
                     row = improve_MANY_RESULTS(row,max_rows)
         elif max_rows.shape[0]==1:
             if (max_rows['Fuzzy'].unique()>=67):
-                row = match(row, max_rows,'MATCH_Fuzzy')
+                if (find_area(row,max_rows).shape[0]==1):
+                    row = match(row, max_rows,'MATCH_Fuzzy')
+                else:
+                    row = match(row, max_rows, 'MATCH_Fuzzy NOT IN SAME CITY')
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
             else:
                 row['Percent_Match'] = max_rows['Fuzzy'].max()
@@ -192,7 +202,10 @@ def search_MPRN(row,geo_df,df_thoroughfare):
             search_apart = search_thoroughfare[search_thoroughfare.loc[:,'Full_Address'].str.contains(r'\b{0}\b'.format(row['MPRN unit no'].strip()),regex=True)]
     if (search_apart is not None):
         if (search_apart.shape[0]==1):
-            row = match(row, search_apart,'MATCH')
+            if (find_area(row,search_apart).shape[0]==1):
+                row = match(row, search_apart,'MATCH')
+            else:
+                row = match(row, search_apart,'MATCH NOT IN SAME CITY')
         elif (search_apart.shape[0] > 1 and len(search_apart['SMALL_AREA_REF'].unique()) == 1):
             row = fuzzy_process(search_apart, row,address,'SAME_SA')
             #row = match(row, search_apart, 'SAME_SA')
@@ -201,7 +214,10 @@ def search_MPRN(row,geo_df,df_thoroughfare):
     if len(row['Status'])==0:
         if search_num is not None:
             if (search_num.shape[0]==1):
-                row = match(row, search_num,'MATCH')
+                if (find_area(row,search_num).shape[0]==1):
+                    row = match(row, search_num,'MATCH')
+                else:
+                    row = match(row, search_num, 'MATCH NOT IN SAME CITY')
             elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) == 1):
                 row = fuzzy_process(search_num, row, address, 'SAME_SA')
             elif (search_num.shape[0] > 1 and len(search_num['SMALL_AREA_REF'].unique()) != 1):
@@ -256,17 +272,25 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
             search_thorougfare = D4_geo_num_df[D4_geo_num_df.loc[:, 'Full_Address'].str.contains(thoroughfare)]
         search_num = search_thorougfare[(search_thorougfare.loc[:, 'SUB_BUILDING_NAME'].str.contains(r'\b{0}\b'.format(num), regex=True)) | (search_thorougfare.loc[:, 'BUILDING_NUMBER'] == num)]
         if search_num.shape[0] == 1:
-            if (search_num.iloc[0]['Status']==""):
+            if (find_area(row,search_num).shape[0]==1):
                 row = match(row, search_num,'MATCH')
+            else:
+                row = match(row, search_num, 'MATCH NOT IN SAME CITY')
         elif search_num.shape[0] > 1:
             num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
-            if (num_match.shape[0] == 1):
-                row = match(row,num_match,'MATCH')
+            if (num_match.shape[0] == 1 ):
+                if (find_area(row,num_match).shape[0]==1):
+                    row = match(row,num_match,'MATCH')
+                else:
+                    row=match(row,num_match,'MATCH NOT IN SAME CITY')
             else:
                 # Checking if it matches
                 last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1, dwel2))]
                 if (last_search.shape[0]==1):
-                    row = match(row, last_search,'MATCH')
+                    if (find_area(row,last_search).shape[0]==1):
+                        row = match(row, last_search,'MATCH')
+                    else:
+                        row=match(row,last_search,'MATCH NOT IN SAME CITY')
                 else:
                     if (len(search_num['SMALL_AREA_REF'].unique())==1):
                         row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,'SAME_SA')
@@ -309,7 +333,7 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
                 num = re.search(r'\b[0-9]+\b', dwel2).group()
                 last_digit = re.search(r'\b[0-9]+\b', num).end()
                 thoroughfare = dwel2[last_digit + 1:]  # this thoroughfare can be the Building group name
-            if (len(dwel2)==0):
+            if (len(dwel2)==0 or D4_geo_letters_df[D4_geo_letters_df.loc[:, 'Full_Address'].str.contains(thoroughfare)].shape[0]==0):
                 thoroughfare=dwel3
                 if bool(re.search(r'\b[0-9]+\b', dwel3)):
                     num = re.search(r'\b[0-9]+\b', dwel3).group()
@@ -322,17 +346,25 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
             search_num = search_thoroughfare[search_thoroughfare.loc[:, 'Full_Address'].str.contains(dwel2)]
         if (search_num is not None):
             if search_num.shape[0] == 1:
-                if (search_num.iloc[0]['Status']==""):
+                if (find_area(row,search_num).shape[0]==1):
                     row = match(row,search_num,'MATCH')
+                else:
+                    row = match(row, search_num, 'MATCH NOT IN SAME CITY')
             elif search_num.shape[0] > 1:
                 num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
                 if (num_match.shape[0] == 1):
-                    row = match(row, num_match,'MATCH')
+                    if (find_area(row,num_match).shape[0]==1):
+                        row = match(row, num_match,'MATCH')
+                    else:
+                        row = match(row,num_match,'MATCH NOT IN SAME CITY')
                 else:
                     # Checking if it matches
                     last_search = search_num[search_num.loc[:,'Full_Address'].str.contains(r'\b{0} {1}\b'.format(dwel1,dwel2))]
                     if (last_search.shape[0]==1):
-                        row = match(row, last_search,'MATCH')
+                        if (find_area(row,last_search).shape[0]==1):
+                            row = match(row, last_search,'MATCH')
+                        else:
+                            row = match(row, last_search,'MATCH NOT IN SAME CITY')
                     else:
                         if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                             row = fuzzy_process(search_num, row, dwel1 + " " + dwel2,'SAME_SA')
@@ -355,6 +387,7 @@ def search_letter_first(row,D4_geo_letters_df,df_thoroughfare):#
 
     #filter = D4_geo_letters_df[D4_geo_letters_df.loc[:,'Full_Address'].str.contains(r'\bCANON\b',regex=True)]
     return row
+
 
 def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
     other_way=False
@@ -386,12 +419,19 @@ def search_num_letter(row, D4_geo_num_df,df_thoroughfare):
                 elif search_num.shape[0] > 0:
                     num_match = search_num[search_num.loc[:, 'Status'] != 'FOUND MATCH']
                     if (num_match.shape[0] == 1):
-                        row = match(row, num_match,'MATCH')
+                        if (find_area(row,num_match).shape[0]==1):
+                            row = match(row, num_match,'MATCH')
+                        else:
+                            row = match(row, num_match, 'MATCH NOT IN SAME CITY')
                     else:
                         # Checking if it matches
                         last_search = search_num[search_num.loc[:, 'Full_Address'].str.contains(r'\b{0} {1}\b'.format(num, street))]
                         if (last_search.shape[0]==1):
-                            row = match(row, last_search,'MATCH')
+                            if (find_area(row,last_search).shape[0]==1):
+                                row = match(row, last_search,'MATCH')
+                            else:
+                                row = match(row, last_search,'MATCH NOT IN SAME CITY')
+
                         else:
                             if (len(search_num['SMALL_AREA_REF'].unique()) == 1):
                                 row = fuzzy_process(search_num, row, num + " " + street,'SAME_SA')
@@ -470,8 +510,8 @@ def main():
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
-    dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
-    #dwelling_df = pd.read_csv('BLANK 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
+    #dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
+    dwelling_df = pd.read_csv('BLANK SAME SA 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -530,24 +570,25 @@ def main():
     geo_dublin =  geo_df.groupby('PRINCIPAL_POST_TOWN')
     dwelling_county= dwelling_df_counties_replace.groupby('MPRN county')
     geo_county =  geo_df.groupby('COUNTY')
-    #no_mprn_county_df = dwelling_county.get_group("")
+
     #Extract no mprn info data
-    #no_mprn_county_df_results = looking_for_matching_for_no_mprn_county(no_mprn_county_df)
-    #dwelling_df_counties_replace.update(no_mprn_county_df_results)
+    # no_mprn_county_df = dwelling_county.get_group("")
+    # no_mprn_county_df_results = looking_for_matching_for_no_mprn_county(no_mprn_county_df)
+    # dwelling_df_counties_replace.update(no_mprn_county_df_results)
     #dwelling_dublin = dwelling_df_counties_replace.groupby('MPRN city')
     #dwelling_county = dwelling_df_counties_replace.groupby('MPRN county')
 
     total=0
-    for i in dublin_cities:
-        print i
-        # if i =='DUBLIN 2':
-        #     break
-        # if (i == 'DUBLIN 3'):
-        if i in dwelling_dublin.groups.keys():
-            each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
-            dwelling_df_counties_replace.update(each_type_dublin)
-            total+=dwelling_dublin.get_group(i).shape[0]
-            print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
+    # for i in dublin_cities:
+    #     print i
+    #     # if i =='DUBLIN 2':
+    #     #     break
+    #     # if (i == 'DUBLIN 3'):
+    #     if i in dwelling_dublin.groups.keys():
+    #         each_type_dublin = process_each_category(dwelling_dublin.get_group(i),geo_dublin.get_group(i))
+    #         dwelling_df_counties_replace.update(each_type_dublin)
+    #         total+=dwelling_dublin.get_group(i).shape[0]
+    #         print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
 
     # dwelling_df_counties_replace = dwelling_df_counties_replace[['Dwelling Address','Dwelling AddressLine1','Dwelling AddressLine2','Dwelling AddressLine3','MPRN Address','MPRN unit no','MPRN house no','MPRN street','MPRN address4','MPRN city','MPRN county','Status','Percent_Match','Geo_Address','EIRCODE','SMALL_AREA_REF']]
 
@@ -557,7 +598,7 @@ def main():
         print j
         # if (j == 'WICKLOW'):
         # #    break
-        if j in dwelling_county.groups.keys():
+        if j=='LIMERICK' and j in dwelling_county.groups.keys():
             if (j=='DUBLIN'):
                 geo_outside_DUBLIN = geo_county.get_group(j)
                 dwelling_DUBLIN =dwelling_county.get_group(j)
