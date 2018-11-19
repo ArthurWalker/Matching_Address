@@ -484,6 +484,7 @@ def process_each_category(D4_dwelling_df,D4_geo_df):
         (D4_dwelling_df.loc[:, 'Dwelling AddressLine1'].str.contains(r'^[A-Z]+[0-9]+\b', na=False, regex=True))]
 
 
+
     #filter = D4_dwelling_letters_only_df[D4_dwelling_letters_only_df.loc[:,'Dwelling AddressLine1'].str.contains(r'\bWELLINGTON\b',regex=True)]
    # filter.iloc[0]['Dwelling AddressLine1']
 
@@ -511,9 +512,9 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
-    #dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
-    dwelling_df = pd.read_csv('BLANK MATCH 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
+    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
+    #dwelling_df = pd.read_csv('BLANK SAME SA 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -596,11 +597,12 @@ def main():
 
     #each_type_dublin.to_csv(path_or_buf='Dwelling_D1_results.csv', index=None, header=True)
 
+
     for j in counties:
         print j
         # if (j == 'WICKLOW'):
         # #    break
-        if  j in dwelling_county.groups.keys():
+        if j in dwelling_county.groups.keys():
             if (j=='DUBLIN'):
                 geo_outside_DUBLIN = geo_county.get_group(j)
                 dwelling_DUBLIN =dwelling_county.get_group(j)
@@ -608,7 +610,10 @@ def main():
                 each_type_county = process_each_category(dwelling_outside_DUBLIN, geo_outside_DUBLIN)
                 total += dwelling_outside_DUBLIN.shape[0]
             else:
-                each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
+                if j in geo_dublin.groups.keys():
+                    each_type_county = process_each_category(dwelling_county.get_group(j), pd.concat([geo_county.get_group(j),geo_dublin.get_group(j)]))
+                else:
+                    each_type_county = process_each_category(dwelling_county.get_group(j), geo_county.get_group(j))
                 total += dwelling_county.get_group(j).shape[0]
             dwelling_df_counties_replace.update(each_type_county)
             print 'Done '+str(total)+' addresses out of '+str(dwelling_df_counties_replace.shape[0])
@@ -619,7 +624,7 @@ def main():
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_BLANK 1000.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_19_11.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':
