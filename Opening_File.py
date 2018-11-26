@@ -7,7 +7,7 @@ from Many_Results import dealing_with_MANY_RESULTS
 def main():
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling = pd.read_csv(path+'File 16-11/Results_BLANK 16-11.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv(path+'File 19-11/Pham_Check_adds.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     #geo= pd.read_csv(path+'Sample Data/GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
 
@@ -49,8 +49,8 @@ def main():
     #dwelling_df = dwelling[~dwelling.loc[:,'Status'].str.contains(r'MATCH|MATCH_Fuzzy|MATCH_not100%|SAME_SA|SAME_SA_not100%|MANY RESULTS|SAME_SA_NO_NUMs|Worst_Fuzzy_Case',regex=True)]
     #dwelling_df = dwelling_df[dwelling_df.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
     #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'SAME SA|SAME SA Worst Fuzzy Case|MANY RESULTS|SAME SA NO NUM', regex=True)]
-    dwelling_df = dwelling[dwelling['Status'].isin(['SAME SA'])]
-    #dwelling_df = dwelling[dwelling['Status']== 'SAME SA']
+    #dwelling_df = dwelling[dwelling['Status'].isin(['SAME SA','MANY RESULTS MATCH','SAME SA MATCH'])]
+    dwelling_df = dwelling[dwelling['Status']== 'SAME SA']
     #dwelling_df = dwelling_df[~dwelling_df['UNIQUE_SMALL_AREA_REF'].isin([''])]
     #dwelling_df = dwelling_df[dwelling_df['Percent_Match']<70]
     #sample_df = sample_df.apply(pick_rand)
@@ -62,14 +62,14 @@ def main():
     #dwelling_df = dwelling[dwelling['COUNTY']=='DUBLIN']
     #dwelling.shape[0]
     #dwelling_df.shape[0]
-    sample_df = dwelling_df.head(1000)
+    #sample_df = dwelling_df.head(1000)
     #sample_df = dwelling_df.sample(n=1000)
     #dwelling_df.to_csv(path_or_buf='Results_Blank_Fields_False_MANY_RESULTS.csv', index=None, header=True)
     #with open(path+'File 15-11/dict_ADDRESS_REFERENCE.pkl') as f:  # Python 3: open(..., 'rb')
     #    dict = pickle.load(f)
 
     #new_df = (dealing_with_MANY_RESULTS(sample_df,geo,dict))
-    sample_df.to_csv(path_or_buf='BLANK SAME SA 1000.csv', index=None, header=True)
+    dwelling_df.to_csv(path_or_buf='BLANK SAME SA.csv', index=None, header=True)
 
 
 if __name__=='__main__':

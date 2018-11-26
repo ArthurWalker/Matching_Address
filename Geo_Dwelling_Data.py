@@ -156,7 +156,7 @@ def fuzzy_process(search_num,row,dwel,status):
                 else:
                     row = improve_MANY_RESULTS(row,max_rows)
         elif max_rows.shape[0]==1:
-            if (max_rows['Fuzzy'].unique()>=67):
+            if (max_rows['Fuzzy'].unique()>=72):
                 if (find_area(row,max_rows).shape[0]==1):
                     row = match(row, max_rows,'MATCH_Fuzzy')
                 else:
@@ -173,6 +173,9 @@ def fuzzy_process(search_num,row,dwel,status):
     else:
         row['Status']='CANT FIND'
     return row
+
+fuzz.partial_ratio('GOWLANE','GOWLANE KENMARE')
+
 
 def search_MPRN(row,geo_df,df_thoroughfare):
     cant_find=False
@@ -303,7 +306,10 @@ def search_num_first(row,D4_geo_num_df,df_thoroughfare):
                         row = fuzzy_process(search_num,row,num+" "+thoroughfare_dwel1,None)
         else:
             if (search_thorougfare.shape[0]>0 and len(search_thorougfare['SMALL_AREA_REF'].unique())==1):
-                row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs')
+                if (find_area(row,search_thorougfare).shape[0]==1):
+                    row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs')
+                else:
+                    row = match(row, search_thorougfare, 'SAME_SA_NO_NUMs NOT IN SAME CITY')
             else:
                 row = search_MPRN(row,D4_geo_num_df,df_thoroughfare)
     except Exception as ex:
@@ -512,9 +518,9 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
-    dwelling_df = pd.read_csv(path+'Result_Blank.csv',skipinitialspace=True,low_memory=False).fillna('')
-    #dwelling_df = pd.read_csv('BLANK SAME SA 1000.csv', skipinitialspace=True, low_memory=False).fillna('')
+    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
+    #dwelling_df = pd.read_csv(path + "Result_Blank.csv", skipinitialspace=True, low_memory=False).fillna('')
+    dwelling_df = pd.read_csv('BLANK SAME SA.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -602,7 +608,7 @@ def main():
         print j
         # if (j == 'WICKLOW'):
         # #    break
-        if j in dwelling_county.groups.keys():
+        if j=='KERRY' and j in dwelling_county.groups.keys():
             if (j=='DUBLIN'):
                 geo_outside_DUBLIN = geo_county.get_group(j)
                 dwelling_DUBLIN =dwelling_county.get_group(j)
@@ -621,7 +627,7 @@ def main():
     #each_type_dublin.to_csv(path_or_buf='D1.csv', index=None, header=True)
 
     # Saving the dictionary:
-    with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python 3: open(..., 'wb')
+    with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python  3: open(..., 'wb')
         pickle.dump(dict, f)
 
     dwelling_df_counties_replace.to_csv(path_or_buf='Results_19_11.csv', index=None, header=True)
