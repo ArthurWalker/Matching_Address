@@ -174,9 +174,6 @@ def fuzzy_process(search_num,row,dwel,status):
         row['Status']='CANT FIND'
     return row
 
-fuzz.partial_ratio('GOWLANE','GOWLANE KENMARE')
-
-
 def search_MPRN(row,geo_df,df_thoroughfare):
     cant_find=False
     #row = row.replace(r'\b[FLAT|APT|BASEMENT|FLOOR|GROUND|FIRST|SECOND|THIRD|APARTMENT|FL|UNIT|TOP|TP|NO|NUMBER]\b','',inplace=False, regex=True)
@@ -235,15 +232,15 @@ def search_MPRN(row,geo_df,df_thoroughfare):
         row['Status']='CANT FIND'
     return row
 
-def find_county(row):
-    if (re.search(r'\bDUBLIN \d+\b',row['Dwelling Address'])):
-        row['MPRN city']=re.search(r'\bDUBLIN \d+\b',row['Dwelling Address']).group()
-    else:
-        row['MPRN county'] = row['Dwelling Address'].rsplit(' ',1)[1]
-    return row
 
-def looking_for_matching_for_no_mprn_county(df):
-    df  = df.apply(find_county)
+def add_area(series,df):
+    for i in range(len(series)):
+        if (re.search(r'\bDUBLIN \d+(\w)?\b',series[i])):
+            df.loc[i,'MPRN city']=re.search(r'\bDUBLIN \d+(\w)?\b',series[i]).group()
+        elif (re.search(r'\b\w+\sCITY\b',series[i])):
+            df.loc[i,'MPRN city']=re.search(r'\b\w+\sCITY\b',series[i]).group().split(' ')[0].strip()
+        elif (re.search(r'\bCO\s\w+\b',series[i])):
+            df.loc[i,'MPRN county'] = re.search(r'\bCO\s\w+\b',series[i]).group().split(' ')[1].strip()
     return df
 
 def search_num_first(row,D4_geo_num_df,df_thoroughfare):
@@ -518,9 +515,9 @@ def main():
     #C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/
     #C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/
     #S:/Low Carbon Technologies/Behavioural Economics/01. Current Projects/01.08.2018 Geocoding Project/Files to put on servers  - Phuc/
-    path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/Sample Data/')
-    #dwelling_df = pd.read_csv(path + "Result_Blank.csv", skipinitialspace=True, low_memory=False).fillna('')
-    dwelling_df = pd.read_csv('BLANK SAME SA.csv', skipinitialspace=True, low_memory=False).fillna('')
+    path = os.path.join('C:/Users/MBohacek/AAA_PROJECTS/Pham_geocoding/data_PhamMatching/')
+    dwelling_df = pd.read_csv(path + "Reformat2.csv", skipinitialspace=True, low_memory=False).fillna('')
+    #dwelling_df = pd.read_csv('BLANK MPRN.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     geo_df = pd.read_csv(path + 'GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
     dwelling_df = dwelling_df.replace(r'[!@#$%&*\_+\-=|\\:\";\<\>\,\.\(\)\[\]{}]', '', inplace=False, regex=True)
@@ -575,17 +572,17 @@ def main():
     dwelling_df['UNIQUE_LATITUDE']=""
     dwelling_df['UNIQUE_LONGITUDE']=""
     dwelling_df_counties_replace = dwelling_df.replace({'MPRN county': dict_strange_county}, regex=True)
+
+    #Extract no mprn info data
+    print ('Add area for addresses having no MPRN information')
+    dwelling_df_no_mprn = dwelling_df_counties_replace[dwelling_df_counties_replace.loc[:,'MPRN Address']==""]
+    dwelling_df_no_mprn=add_area(dwelling_df_no_mprn['Dwelling Address'].values,dwelling_df_no_mprn)
+    dwelling_df_counties_replace.update(dwelling_df_no_mprn)
+
     dwelling_dublin = dwelling_df_counties_replace.groupby('MPRN city')
     geo_dublin =  geo_df.groupby('PRINCIPAL_POST_TOWN')
     dwelling_county= dwelling_df_counties_replace.groupby('MPRN county')
     geo_county =  geo_df.groupby('COUNTY')
-
-    #Extract no mprn info data
-    # no_mprn_county_df = dwelling_county.get_group("")
-    # no_mprn_county_df_results = looking_for_matching_for_no_mprn_county(no_mprn_county_df)
-    # dwelling_df_counties_replace.update(no_mprn_county_df_results)
-    #dwelling_dublin = dwelling_df_counties_replace.groupby('MPRN city')
-    #dwelling_county = dwelling_df_counties_replace.groupby('MPRN county')
 
     total=0
     for i in dublin_cities:
@@ -608,7 +605,7 @@ def main():
         print j
         # if (j == 'WICKLOW'):
         # #    break
-        if j=='KERRY' and j in dwelling_county.groups.keys():
+        if j in dwelling_county.groups.keys():
             if (j=='DUBLIN'):
                 geo_outside_DUBLIN = geo_county.get_group(j)
                 dwelling_DUBLIN =dwelling_county.get_group(j)
@@ -630,7 +627,7 @@ def main():
     with open('dict_ADDRESS_REFERENCE.pkl', 'w') as f:  # Python  3: open(..., 'wb')
         pickle.dump(dict, f)
 
-    dwelling_df_counties_replace.to_csv(path_or_buf='Results_19_11.csv', index=None, header=True)
+    dwelling_df_counties_replace.to_csv(path_or_buf='Results_26_11.csv', index=None, header=True)
     print 'Done! from ', time.asctime( time.localtime(start_time)),' to ',time.asctime( time.localtime(time.time()))
 
 if __name__ == '__main__':

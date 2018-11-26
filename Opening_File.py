@@ -7,7 +7,7 @@ from Many_Results import dealing_with_MANY_RESULTS
 def main():
     path = os.path.join('C:/Users/pphuc/Desktop/Docs/Current Using Docs/')
 
-    dwelling = pd.read_csv(path+'File 19-11/Pham_Check_adds.csv', skipinitialspace=True, low_memory=False).fillna('')
+    dwelling = pd.read_csv(path+'Sample Data/Reformat2.csv', skipinitialspace=True, low_memory=False).fillna('')
 
     #geo= pd.read_csv(path+'Sample Data/GeoDirectoryData.csv', skipinitialspace=True, low_memory=False).fillna('')
 
@@ -50,7 +50,7 @@ def main():
     #dwelling_df = dwelling_df[dwelling_df.loc[:, 'Status'].str.contains(r'CANT FIND', regex=True)]
     #dwelling_df = dwelling[dwelling.loc[:, 'Status'].str.contains(r'SAME SA|SAME SA Worst Fuzzy Case|MANY RESULTS|SAME SA NO NUM', regex=True)]
     #dwelling_df = dwelling[dwelling['Status'].isin(['SAME SA','MANY RESULTS MATCH','SAME SA MATCH'])]
-    dwelling_df = dwelling[dwelling['Status']== 'SAME SA']
+    dwelling_df = dwelling[dwelling['MPRN Address']== '']
     #dwelling_df = dwelling_df[~dwelling_df['UNIQUE_SMALL_AREA_REF'].isin([''])]
     #dwelling_df = dwelling_df[dwelling_df['Percent_Match']<70]
     #sample_df = sample_df.apply(pick_rand)
@@ -69,7 +69,7 @@ def main():
     #    dict = pickle.load(f)
 
     #new_df = (dealing_with_MANY_RESULTS(sample_df,geo,dict))
-    dwelling_df.to_csv(path_or_buf='BLANK SAME SA.csv', index=None, header=True)
+    dwelling_df.to_csv(path_or_buf='BLANK MPRN.csv', index=None, header=True)
 
 
 if __name__=='__main__':
