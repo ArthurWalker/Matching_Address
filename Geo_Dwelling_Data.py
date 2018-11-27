@@ -238,7 +238,7 @@ def add_area(series,df):
         if (re.search(r'\bDUBLIN \d+(\w)?\b',series[i])):
             df.loc[i,'MPRN city']=re.search(r'\bDUBLIN \d+(\w)?\b',series[i]).group()
         elif (re.search(r'\b\w+\sCITY\b',series[i])):
-            df.loc[i,'MPRN city']=re.search(r'\b\w+\sCITY\b',series[i]).group().split(' ')[0].strip()
+            df.loc[i,'MPRN county']=re.search(r'\b\w+\sCITY\b',series[i]).group().split(' ')[0].strip()
         elif (re.search(r'\bCO\s\w+\b',series[i])):
             df.loc[i,'MPRN county'] = re.search(r'\bCO\s\w+\b',series[i]).group().split(' ')[1].strip()
     return df
